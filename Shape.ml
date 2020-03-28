@@ -64,15 +64,17 @@ let rec hasRect s =
 
 let rec countBasic s =
     match s with
-          Rect (p,q) -> failwith "countBasic: Rect"
-        | Circle (p,f) -> failwith "countBasic: Circle"
-        | Union (l,r) -> failwith "countBasic: Union"
-        | Intersection (l,r) -> failwith "countBasic: Intersection"
-        | Subtraction (l,r) -> failwith "countBasic: Subtraction"
+          Rect (p,q) -> 1
+        | Circle (p,f) -> 1
+        | Union (l,r) -> countBasic l + countBasic r
+        | Intersection (l,r) -> countBasic l + countBasic r
+        | Subtraction (l,r) -> countBasic l + countBasic r
 ;;
 
 
 (* FUNCTION belongs *)
+
+(* Black means no subtraction *)
 
 let belongs p s =
     true
