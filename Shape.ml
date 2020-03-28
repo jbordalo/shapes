@@ -71,14 +71,38 @@ let rec countBasic s =
         | Subtraction (l,r) -> countBasic l + countBasic r
 ;;
 
+(* countBasic shape1 *)
 
 (* FUNCTION belongs *)
 
-(* Black means no subtraction *)
+(* Distance between two points *)
+let dist p1 p2 =
+		sqrt ( (fst p1 -. fst p2)**2. +. (snd p1 -. snd p2)**2. )	
 
 let belongs p s =
-    true
+    match s with
+					(* Inclusive inequality due to border belonging to closed shape *)
+      		Rect (tl, br) -> fst p >= fst tl && fst p <= fst br && snd p >= snd tl && snd p <= snd br
+				| Circle (center, radius) -> dist p center < radius
+        | Union (l,r) -> belongs p l || belongs p r
+        | Intersection (l,r) -> belongs p l && belongs p r
+        | Subtraction (l,r) -> belongs p l && not (belongs p r)
 ;;
+
+(* val shape1 : shape =
+  Union (Rect ((0., 0.), (5., 2.)), Rect ((2., 2.), (7., 7.)))
+*)
+
+(* rect1 *)
+(* belongs (3., 1.) shape1 *)
+(* rect2 *)
+(* belongs (3., 5.) shape1 *)
+(* none *)
+(* belongs (1., 5.) shape1 *)
+(* let circle = Circle ((0., 0.),(5.));; *)
+(* belongs (0., 4.) circle *)
+(* belongs (0., 9.) circle *)
+
 
 
 (* FUNCTION density *)
