@@ -45,6 +45,13 @@ let rect1 = Rect ((0.0, 0.0), (5.0, 2.0));;
 let rect2 = Rect ((2.0, 2.0), (7.0, 7.0));;
 let shape1 = Union (rect1, rect2);;
 
+(* MORE EXAMPLES *)
+
+let rectOne = Rect ((0.0, 0.0), (5.0, 4.0));;
+let rectTwo = Rect ((2.0, 2.0), (7.0, 7.0));;
+let shapeOverlapUnion = Union (rectOne, rectTwo);;
+let shapeIntersection = Intersection (rectOne, rectTwo);;
+
 (* Module List for reference *)
 (* http://caml.inria.fr/pub/docs/manual-ocaml/libref/List.html *)
 
@@ -79,31 +86,42 @@ let rec countBasic s =
 let dist p1 p2 =
 		sqrt ( (fst p1 -. fst p2)**2. +. (snd p1 -. snd p2)**2. )	
 
+(* TODO Is it including all borders? *)
 let belongs p s =
     match s with
 					(* Inclusive inequality due to border belonging to closed shape *)
       		Rect (tl, br) -> fst p >= fst tl && fst p <= fst br && snd p >= snd tl && snd p <= snd br
-				| Circle (center, radius) -> dist p center < radius
+				| Circle (center, radius) -> dist p center <= radius
         | Union (l,r) -> belongs p l || belongs p r
         | Intersection (l,r) -> belongs p l && belongs p r
         | Subtraction (l,r) -> belongs p l && not (belongs p r)
 ;;
 
-(* val shape1 : shape =
-  Union (Rect ((0., 0.), (5., 2.)), Rect ((2., 2.), (7., 7.)))
+(* val shapeOverlapUnion : shape =
+  Union (Rect ((0., 0.), (5., 4.)), Rect ((2., 2.), (7., 7.)))
 *)
 
-(* rect1 *)
-(* belongs (3., 1.) shape1 *)
-(* rect2 *)
-(* belongs (3., 5.) shape1 *)
-(* none *)
-(* belongs (1., 5.) shape1 *)
+(* rectOne = true *)
+(* belongs (3., 1.) shapeOverlapUnion *)
+(* rectTwo = true *)
+(* belongs (6., 3.) shapeOverlapUnion *)
+(* none = false *)
+(* belongs (1., 15.) shapeOverlapUnion *)
 (* let circle = Circle ((0., 0.),(5.));; *)
 (* belongs (0., 4.) circle *)
 (* belongs (0., 9.) circle *)
 
+(* val shapeIntersection : shape =
+  Intersection (Rect ((0., 0.), (5., 4.)), Rect ((2., 2.), (7., 7.))) *)
 
+(* rectOne = false *)
+(* belongs (3., 1.) shapeIntersection *)
+(* rectTwo = false *)
+(* belongs (6., 3.) shapeIntersection *)
+(* none = false *)
+(* belongs (1., 15.) shapeIntersection *)
+(* both = true *)
+(* belongs (3., 3.) shapeIntersection *)
 
 (* FUNCTION density *)
 
@@ -141,7 +159,7 @@ let grid m n a b =
 
 (* FUNCTION countBasicRepetitions *)
 
-(* Para testar repetições, use a igualdade "=". Por exemplo, se houver dois círculos iguais (com o mesmo centro e raio) e as restantes forma básicas forem únicas, então o resultado será 2. *)
+(* Para testar repetiï¿½ï¿½es, use a igualdade "=". Por exemplo, se houver dois cï¿½rculos iguais (com o mesmo centro e raio) e as restantes forma bï¿½sicas forem ï¿½nicas, entï¿½o o resultado serï¿½ 2. *)
 
 let countBasicRepetitions s =
     0
