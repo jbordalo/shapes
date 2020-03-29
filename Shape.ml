@@ -92,8 +92,9 @@ let dist p1 p2 =
 let rec belongs p s =
     match s with
 		(* Inclusive inequality due to border belonging to closed shape *)
-      	Rect (tl, br) -> fst p >= fst tl && fst p <= fst br && snd p >= snd tl && snd p <= snd br
-		| Circle (center, radius) -> dist p center <= radius
+      	Rect (tl, br) -> fst p >= fst tl && fst p <= fst br 
+				&& snd p >= snd tl && snd p <= snd br
+				| Circle (center, radius) -> dist p center <= radius
         | Union (l,r) -> belongs p l || belongs p r
         | Intersection (l,r) -> belongs p l && belongs p r
         | Subtraction (l,r) -> belongs p l && not (belongs p r)
@@ -139,7 +140,8 @@ let rec density p s =
       	Rect (_, _) -> if belongs p s then 1 else 0
 		| Circle (_, _) -> if belongs p s then 1 else 0
         | Union (l,r) -> density p l + density p r
-        | Intersection (l,r) -> if belongs p s then density p l + density p r else 0
+        | Intersection (l,r) -> if belongs p s 
+				then density p l + density p r else 0
         | Subtraction (l,r) -> if belongs p s then density p l else 0
 ;;
 
@@ -166,12 +168,12 @@ let rec density p s =
 (* Not sure about a lot of shit*)
 let rec which p s =
   	if belongs p s then
-		match s with
-    Rect(_,_) -> [s]
-		| Circle(_,_) -> [s]
-		| Union(l,r) -> which p l @ which p r
-		| Intersection(l,r) -> which p l @ which p r
-		| Subtraction (l,r)-> which p l @ which p r
+			match s with
+    		Rect(_,_) -> [s]
+				| Circle(_,_) -> [s]
+				| Union(l,r) -> which p l @ which p r
+				| Intersection(l,r) -> which p l @ which p r
+				| Subtraction (l,r)-> which p l @ which p r
 	else []
 ;;
 
@@ -253,7 +255,9 @@ let rec row m n a b =
 		else if m = 2 && n mod 2 = 0
 			then Rect(((mx-.1.0)*.a, (ny-.1.0)*.b),(mx*.a, ny*.b))
 		else if both_odd || both_even
-			then Union (Rect(((mx-.1.0)*.a, (ny-.1.0)*.b),(mx*.a, ny*.b)), row (m-1) n a b)
+			then Union (
+					Rect(((mx-.1.0)*.a, (ny-.1.0)*.b),(mx*.a, ny*.b)), row (m-1) n a b
+				)
 		else row (m-1) n a b
 ;;
 (* Both col and row even numbers : Union (Rect ((3., 1.), (4., 2.)), Rect ((1., 1.), (2., 2.)))*)
@@ -275,7 +279,9 @@ let rec col m n a b =
 		else if n = 2 && m mod 2 = 0
 			then Rect(((mx-.1.0)*.a, (ny-.1.0)*.b),(mx*.a, ny*.b))
 		else if both_odd || both_even
-			then Union (Rect(((mx-.1.0)*.a, (ny-.1.0)*.b),(mx*.a, ny*.b)), col m (n-1) a b)
+			then Union (
+					Rect(((mx-.1.0)*.a, (ny-.1.0)*.b),(mx*.a, ny*.b)), col m (n-1) a b
+				)
 		else col m (n-1) a b
 ;;
 (* Both col and row even numbers : Rect ((3., 1.), (4., 2.) *)
@@ -286,14 +292,18 @@ let rec col m n a b =
 (* col 5 6 1.0 1.0 *)
 
 let rec sub m n a b =
-	if n = 1 && m = 1 then Rect((0.0,0.0),(a,b))
-	else if n = 1 then row m n a b
-	else if m = 1 then col m n a b
+	if n = 1 && m = 1 
+		then Rect((0.0,0.0),(a,b))
+	else if n = 1 
+		then row m n a b
+	else if m = 1 
+		then col m n a b
 	else Union(row m n a b, sub m (n-1) a b)
 ;;
 
-let grid m n a b =
-    Subtraction( Rect((0.0,0.0),((float_of_int m)*.a,(float_of_int n)*.b)), sub (m-1) (n-1) a b)
+let grid m n a b =  (* @pre: n,m > 0 *)
+    Subtraction( Rect((0.0,0.0),((float_of_int m)*.a,(float_of_int n)*.b)), 
+		sub (m-1) (n-1) a b)
 ;;
 
 (* FUNCTION countBasicRepetitions *)
