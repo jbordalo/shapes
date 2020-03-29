@@ -243,21 +243,58 @@ let rec minBound s =
 
 
 (* FUNCTION grid *)
-let rec col m n a b =
-	if m mod 2 = 1 && n mod 2 = 1 then Union (Rect(((m-.1)*.a, (n-.1)*.b), (m*.a, n*.b)), 
+let rec row m n a b =
+	let mx = float_of_int m in
+		let ny = float_of_int n in
+			let both_odd = n mod 2 = 1 && m mod 2 = 1 in
+				let both_even = n mod 2 = 0 && m mod 2 = 0 in
+		if m = 1 && n mod 2 = 1 
+				then Rect((0.0, (ny-.1.0)*.b),(a,ny*.b)) 
+		else if m = 2 && n mod 2 = 0
+			then Rect(((mx-.1.0)*.a, (ny-.1.0)*.b),(mx*.a, ny*.b))
+		else if both_odd || both_even
+			then Union (Rect(((mx-.1.0)*.a, (ny-.1.0)*.b),(mx*.a, ny*.b)), row (m-1) n a b)
+		else row (m-1) n a b
+;;
+(* Both col and row even numbers : Union (Rect ((3., 1.), (4., 2.)), Rect ((1., 1.), (2., 2.)))*)
+(* row 4 2 1.0 1.0 *)
+(* Both col and row odd numbers : Union (Rect ((6., 4.), (7., 5.)), Union (Rect ((4., 4.), (5., 5.)), Union (Rect ((2., 4.), (3., 5.)), Rect ((0., 4.), (1., 5.))))) *)
+(* row 7 5 1.0 1.0 *)
+(* Col even and row odd: Union (Rect ((3., 5.), (4., 6.)), Rect ((1., 5.), (2., 6.))) *)
+(* row 5 6 1.0 1.0 *)
+
+
+(* Probably unecessary but wtv*)
+let rec col m n a b = 
+	let mx = float_of_int m in
+		let ny = float_of_int n in
+			let both_odd = n mod 2 = 1 && m mod 2 = 1 in
+				let both_even = n mod 2 = 0 && m mod 2 = 0 in
+		if n = 1 && m mod 2 = 1
+			then Rect(((mx-.1.0)*.a, 0.0),(mx*.a, b))
+		else if n = 2 && m mod 2 = 0
+			then Rect(((mx-.1.0)*.a, (ny-.1.0)*.b),(mx*.a, ny*.b))
+		else if both_odd || both_even
+			then Union (Rect(((mx-.1.0)*.a, (ny-.1.0)*.b),(mx*.a, ny*.b)), col m (n-1) a b)
+		else col m (n-1) a b
+;;
+(* Both col and row even numbers : Rect ((3., 1.), (4., 2.) *)
+(* col 4 2 1.0 1.0 *)
+(* Both col and row odd numbers : Union (Rect ((6., 4.), (7., 5.)), Union (Rect ((6., 2.), (7., 3.)), Rect ((6., 0.), (7., 1.)))) *)
+(* col 7 5 1.0 1.0 *)
+(* Col even and row odd: Union (Rect ((4., 4.), (5., 5.)), Union (Rect ((4., 2.), (5., 3.)), Rect ((4., 0.), (5., 1.))))*)
+(* col 5 6 1.0 1.0 *)
 
 let rec sub m n a b =
 	if n = 1 && m = 1 then Rect((0.0,0.0),(a,b))
-	else if n = 1 then (TODO)
-	else if m = 1 then (TODO)
-	else (CALL RECURSIVE)
+	else if n = 1 then row m n a b
+	else if m = 1 then col m n a b
+	else Union(row m n a b, sub m (n-1) a b)
 ;;
 
 let grid m n a b =
-    Subtraction( Rect((0.0,0.0),((float_of_int m)*.a,(float_of_int n)*.b)), sub m n a b)
+    Subtraction( Rect((0.0,0.0),((float_of_int m)*.a,(float_of_int n)*.b)), sub (m-1) (n-1) a b)
 ;;
-
-(* grid 6 6 1.5 1.0 *)
 
 (* FUNCTION countBasicRepetitions *)
 (* TODO - if there are 4 shapes equal in pairs what number should this function return?*)
