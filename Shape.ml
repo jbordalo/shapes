@@ -161,14 +161,16 @@ let rec density p s =
 
 (* FUNCTION which *)
 
-(* Not sure about shapes of shapes of shapes of..*)
+(* Not sure about a lot of shit*)
 let rec which p s =
-    match s with
-      	Rect (_, _) -> if belongs p s then [s] else []
-		| Circle (_, _) -> if belongs p s then [s] else []
-        | Union (l,r) -> which p l @ which p r
-        | Intersection (l,r) -> []
-        | Subtraction (l,r) -> []
+  	if belongs p s then 
+		match s with 
+    Rect(_,_) -> [s]
+		| Circle(_,_) -> [s]
+		| Union(l,r) -> which l @ which r
+		| Intersection(l,r) -> which l @ which r
+		| Subtraction (l,r)-> which l @ which r
+	else []
 ;;
 
 (* Inside rectOne but not rectTwo = [rectOne] *)
@@ -225,7 +227,7 @@ let grid m n a b =
 
 (* FUNCTION countBasicRepetitions *)
 
-(* Para testar repetições, use a igualdade "=". Por exemplo, se houver dois círculos iguais (com o mesmo centro e raio) e as restantes forma básicas forem únicas, então o resultado será 2. *)
+(* Para testar repetiï¿½ï¿½es, use a igualdade "=". Por exemplo, se houver dois cï¿½rculos iguais (com o mesmo centro e raio) e as restantes forma bï¿½sicas forem ï¿½nicas, entï¿½o o resultado serï¿½ 2. *)
 
 let countBasicRepetitions s =
     0
