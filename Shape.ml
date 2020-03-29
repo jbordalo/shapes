@@ -243,19 +243,48 @@ let rec minBound s =
 
 
 (* FUNCTION grid *)
+let rec col m n a b =
+	if m mod 2 = 1 && n mod 2 = 1 then Union (Rect(((m-.1)*.a, (n-.1)*.b), (m*.a, n*.b)), 
 
-let grid m n a b =
-    shape1
+let rec sub m n a b =
+	if n = 1 && m = 1 then Rect((0.0,0.0),(a,b))
+	else if n = 1 then (TODO)
+	else if m = 1 then (TODO)
+	else (CALL RECURSIVE)
 ;;
 
+let grid m n a b =
+    Subtraction( Rect((0.0,0.0),((float_of_int m)*.a,(float_of_int n)*.b)), sub m n a b)
+;;
+
+(* grid 6 6 1.5 1.0 *)
 
 (* FUNCTION countBasicRepetitions *)
+(* TODO - if there are 4 shapes equal in pairs what number should this function return?*)
 
 (* Para testar repeticoes, use a igualdade "=". Por exemplo, se houver dois circulos iguais (com o mesmo centro e raio) e as restantes forma basicas forem unicas, entao o resultado sera 2. *)
 
-let countBasicRepetitions s =
-    0
+let rec countBasicRepetitions s =
+	match s with
+	Rect(_,_) -> 0 
+	| Circle(_,_) -> 0
+	| Union (s1, s2) -> count s1 s2
+	| Intersection (s1, s2)-> count s1 s2
+	| Subtraction (s1, s2) -> count s1 s2
+and count s1 s2 =
+	if s1 = s2 
+	then 2 + countBasicRepetitions s1 + countBasicRepetitions s2 
+	else countBasicRepetitions s1 + countBasicRepetitions s2
 ;;
+
+(* Two repeated in union = 2*)
+(* countBasicRepetitions (Union(Circle((0.0,0.0), 1.0),Circle((0.0,0.0), 1.0))) *)
+(* Two repeated and more shapes in s= 2*)
+(* countBasicRepetitions (Union(Intersection(Circle((0.0,0.0), 1.0),Circle((0.0,0.0), 1.0)), shape1)) *)
+(* More than two repeated = 4*)
+(* countBasicRepetitions (Union(Intersection(Circle((0.0,0.0), 1.0),Circle((0.0,0.0), 1.0)), Union(Circle((0.0,0.0), 1.0),Circle((0.0,0.0), 1.0))))*)
+(* More than two repeated but paired 2 to 2 = ??? result ??? 4 or 2 ???*)
+(* countBasicRepetitions (Union(Intersection(Circle((0.0,0.0), 1.0),Circle((0.0,0.0), 1.0)), Union(Circle((1.0,2.0), 3.0),Circle((1.0,2.0), 3.0))))*)
 
 
 (* FUNCTION svg *)
