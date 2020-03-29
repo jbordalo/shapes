@@ -161,16 +161,59 @@ let rec density p s =
 
 (* FUNCTION which *)
 
-let which p s =
-    [s]
+(* Not sure about shapes of shapes of shapes of..*)
+let rec which p s =
+    match s with
+      	Rect (_, _) -> if belongs p s then [s] else []
+		| Circle (_, _) -> if belongs p s then [s] else []
+        | Union (l,r) -> which p l @ which p r
+        | Intersection (l,r) -> []
+        | Subtraction (l,r) -> []
 ;;
 
+(* Inside rectOne but not rectTwo = [rectOne] *)
+(* which (2., 1.) shapeOverlapUnion *)
+(* Inside rectTwo but not rectOne = [rectTwo] *)
+(* which (3., 5.) shapeOverlapUnion *)
+(* Inside both = [rectOne, rectTwo] *)
+(* which (3., 3.) shapeOverlapUnion *)
+(* Outside both = [] *)
+(* which (0., 15.) shapeOverlapUnion *)
+
+(* Inside rectOne but not rectTwo = 0 *)
+(* which (2., 1.) shapeIntersection *)
+(* Inside rectTwo but not rectOne = 0 *)
+(* which (3., 5.) shapeIntersection *)
+(* Inside both = 2 *)
+(* which (3., 3.) shapeIntersection *)
+(* Outside both = 0 *)
+(* which (0., 15.) shapeIntersection *)
 
 (* FUNCTION minBound *)
 
-let minBound s =
-    rect1
+let rectSum r1 r2 =
+	match r1, r2 with
+		Rect(fr1, sr1), Rect(fr2, sr2) ->
+		Rect (
+        	( min (fst fr1) (fst fr2 ) , min (snd fr1 ) (snd fr2 ) ),
+        	( max (fst sr1 ) (fst sr2 ) , max (snd sr1 ) (snd sr2 ) )
+        	 )		
 ;;
+
+rectSum (Rect ((0.,0.),(3.,3.))) (Rect((3.,2.),(6.,5.)));;
+
+let rec minBound s =
+	match s with 
+		Rect (_, _) -> s
+		| Circle (c, r) -> Rect ((fst c-.r, fst c-.r), (snd c+.r,snd c+.r))
+        | Union (l,r) -> rectSum (minBound l) (minBound r)
+        | Intersection (l,r) -> rectSum (minBound l) (minBound r)
+        | Subtraction (l,r) -> minBound l
+;;
+
+minBound (Circle((2.,2.), 2.));;
+minBound (Union(Rect ((0.,0.),(3.,3.)), Rect((3.,2.),(6.,5.))));;
+(* Not tested for intersection or subtraction *)
 
 
 (* FUNCTION grid *)
