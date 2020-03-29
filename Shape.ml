@@ -289,21 +289,34 @@ and count s1 s2 =
 
 (* FUNCTION svg *)
 
-(* https://www.w3schools.com/html/html5_svg.asp *)
+let width r = (* @pre: r is Rect(_,_) *)
+	match r with
+		Rect(l, r) -> fst r -. fst  l
+;;
+
+let height r = (* @pre: r is Rect(_,_) *)
+	match r with
+		Rect(l, r) -> snd r -. snd l
+;;
 
 let auxSvg s color =
 	match s with
-		Rect (lt, rb) -> "<rect width=\"" ^ string_of_int () ^ "\" height=\"" ^ string_of_int ^ "\" fill=\" " ^ color ^ "\" />"
-		| Circle (c, r) -> "<circle cx=\"50\" cy=\"50\" r=\"40\" fill=\""^ color ^"\" />"
-        | Union (l,r) -> rectSum (minBound l) (minBound r)
-        | Intersection (l,r) -> rectSum (minBound l) (minBound r)
-        | Subtraction (l,r) -> minBound l
+		Rect (lt, rb) -> "<rect x=\"" ^ string_of_float (fst lt) ^ "\" y=\"" ^ string_of_float (snd lt) ^ "\" width=\"" ^ string_of_float (width s) ^ "\" height=\"" ^ string_of_float (height s) ^ "\" fill=\"" ^ color ^ "\"/>"
+		| Circle (c, r) -> "<circle cx=\"" ^ string_of_float ( fst c ) ^ "\" cy=\"" ^ string_of_float ( snd c ) ^ "\" r=\"" ^ string_of_float r ^ "\" fill=\""^ color ^"\" />"
+        | Union (l,r) -> auxSvg l "black" ^ auxSvg r "black" 
+        | Intersection (l,r) -> failwith "No idea yet"
+        | Subtraction (l,r) -> auxSvg l "black" ^ auxSvg r "white"
 ;;
 
 let svg s =
-    "<html><body><svg width=\"MINBOUND\" height=\"MINBOUND\"> ... </svg></body></html>"
+	let minimum = minBound s in
+    	"<html><body><svg width=\"" ^ string_of_float (width minimum) ^ "\" height=\"" ^ string_of_float (height minimum) ^ "\">"^ auxSvg s "black" ^"</svg></body></html>"
 ;;
 
+output_string stdout (svg (Rect((100.,100.),(300.,300.))));;
+output_string stdout (svg (Circle((100.,100.),300.)));;
+output_string stdout (svg (Union(Rect((100.,100.),(300.,300.)),Circle((50.,50.),150.))));;
+output_string stdout (svg (Subtraction(Rect((100.,90.),(300.,520.)),Circle((50.,50.),150.))));;
 
 (* FUNCTION partition *)
 
