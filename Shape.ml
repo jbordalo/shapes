@@ -1,6 +1,6 @@
 (* Shape module body *)
 
-(* 
+(*
 Aluno 1: Jacinta Sousa, 55075
 Aluno 2: Joao Bordalo, 55697
 
@@ -86,7 +86,7 @@ let rec countBasic s =
 
 (* Distance between two points *)
 let dist p1 p2 =
-	sqrt ( (fst p1 -. fst p2)**2. +. (snd p1 -. snd p2)**2. )	
+	sqrt ( (fst p1 -. fst p2)**2. +. (snd p1 -. snd p2)**2. )
 
 (* TODO Is it including all borders? *)
 let rec belongs p s =
@@ -165,8 +165,8 @@ let rec density p s =
 
 (* Not sure about a lot of shit*)
 let rec which p s =
-  	if belongs p s then 
-		match s with 
+  	if belongs p s then
+		match s with
     Rect(_,_) -> [s]
 		| Circle(_,_) -> [s]
 		| Union(l,r) -> which p l @ which p r
@@ -208,24 +208,38 @@ let rectSum r1 r2 =
 		Rect (
         	( min (fst fr1) (fst fr2 ) , min (snd fr1 ) (snd fr2 ) ),
         	( max (fst sr1 ) (fst sr2 ) , max (snd sr1 ) (snd sr2 ) )
-        	 )		
+        	 )
 ;;
 
-rectSum (Rect ((0.,0.),(3.,3.))) (Rect((3.,2.),(6.,5.)));;
+let rectAnd r1 r2 =
+	match r1, r2 with
+		Rect(fr1, sr1), Rect(fr2, sr2) ->
+		Rect (
+        	( max (fst fr1) (fst fr2 ) , max (snd fr1 ) (snd fr2 ) ),
+        	( min (fst sr1 ) (fst sr2 ) , min (snd sr1 ) (snd sr2 ) )
+        	 )
+;;
 
+(* rectSum (Rect ((0.,0.),(3.,3.))) (Rect((3.,2.),(6.,5.)));; *)
+(* rectAnd (Rect ((0.,0.),(2.,2.))) (Rect((1.,1.),(4.,4.)));; *)
+
+(* A n B = fuck all *)
 let rec minBound s =
-	match s with 
+	match s with
 		Rect (_, _) -> s
 		| Circle (c, r) -> Rect ((fst c-.r, fst c-.r), (snd c+.r,snd c+.r))
         | Union (l,r) -> rectSum (minBound l) (minBound r)
-        | Intersection (l,r) -> rectSum (minBound l) (minBound r)
+        | Intersection (l,r) -> rectAnd (minBound l) (minBound r)
         | Subtraction (l,r) -> minBound l
 ;;
 
-minBound (Circle((2.,2.), 2.));;
-minBound (Union(Rect ((0.,0.),(3.,3.)), Rect((3.,2.),(6.,5.))));;
-minBound (Intersection(Rect ((0.,0.),(3.,3.)), Rect((3.,2.),(6.,5.))));;
-(* Not tested for intersection or subtraction *)
+(* minBound (Circle((2.,2.), 2.));; *)
+(* minBound (Union(Rect ((0.,0.),(3.,3.)), Rect((3.,2.),(6.,5.))));; *)
+(* minBound (Union(Rect ((0.,1.),(2.,3.)), Rect((1.,0.),(3.,4.))));; *)
+(* minBound (Union(Rect ((1.,0.),(3.,4.)), Rect((0.,1.),(2.,3.))));; *)
+(* minBound (Intersection(Rect ((0.,1.),(2.,3.)), Rect((1.,0.),(3.,4.))));; *)
+(* minBound (Intersection(Rect ((1.,0.),(3.,4.)), Rect((0.,1.),(2.,3.))));; *)
+(* minBound shapeSubtract *)
 
 
 (* FUNCTION grid *)
@@ -267,4 +281,3 @@ let svg s =
 let partition s =
     [s]
 ;;
-
