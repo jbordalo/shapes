@@ -167,9 +167,9 @@ let rec which p s =
 		match s with 
     Rect(_,_) -> [s]
 		| Circle(_,_) -> [s]
-		| Union(l,r) -> which l @ which r
-		| Intersection(l,r) -> which l @ which r
-		| Subtraction (l,r)-> which l @ which r
+		| Union(l,r) -> which p l @ which p r
+		| Intersection(l,r) -> which p l @ which p r
+		| Subtraction (l,r)-> which p l @ which p r
 	else []
 ;;
 
