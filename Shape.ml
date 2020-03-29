@@ -43,7 +43,9 @@ type shape = Rect of point*point
 
 let rect1 = Rect ((0.0, 0.0), (5.0, 2.0));;
 let rect2 = Rect ((2.0, 2.0), (7.0, 7.0));;
+let c1 = Circle((2.0,2.0), 2.0);;
 let shape1 = Union (rect1, rect2);;
+let shapeSubtract = Subtraction(rect2, c1);;
 
 (* MORE EXAMPLES *)
 
@@ -191,6 +193,13 @@ let rec which p s =
 (* Outside both = 0 *)
 (* which (0., 15.) shapeIntersection *)
 
+(* On the subtracted area = 0*)
+(* which (3.0,3.0) shapeSubtract *)
+(* On the limit of the subtracted area = 0*)
+(* which (4.0,2.0) shapeSubtract *)
+(* Inside the shape = [rect2] *)
+(* which (4.0, 3.0) shapeSubtract *)
+
 (* FUNCTION minBound *)
 
 let rectSum r1 r2 =
@@ -228,7 +237,7 @@ let grid m n a b =
 
 (* FUNCTION countBasicRepetitions *)
 
-(* Para testar repeti��es, use a igualdade "=". Por exemplo, se houver dois c�rculos iguais (com o mesmo centro e raio) e as restantes forma b�sicas forem �nicas, ent�o o resultado ser� 2. *)
+(* Para testar repeticoes, use a igualdade "=". Por exemplo, se houver dois circulos iguais (com o mesmo centro e raio) e as restantes forma basicas forem unicas, entao o resultado sera 2. *)
 
 let countBasicRepetitions s =
     0
