@@ -215,6 +215,7 @@ let rec minBound s =
 
 minBound (Circle((2.,2.), 2.));;
 minBound (Union(Rect ((0.,0.),(3.,3.)), Rect((3.,2.),(6.,5.))));;
+minBound (Intersection(Rect ((0.,0.),(3.,3.)), Rect((3.,2.),(6.,5.))));;
 (* Not tested for intersection or subtraction *)
 
 
@@ -238,8 +239,17 @@ let countBasicRepetitions s =
 
 (* https://www.w3schools.com/html/html5_svg.asp *)
 
+let auxSvg s color =
+	match s with
+		Rect (lt, rb) -> "<rect width=\"" ^ string_of_int () ^ "\" height=\"" ^ string_of_int ^ "\" fill=\" " ^ color ^ "\" />"
+		| Circle (c, r) -> "<circle cx=\"50\" cy=\"50\" r=\"40\" fill=\""^ color ^"\" />"
+        | Union (l,r) -> rectSum (minBound l) (minBound r)
+        | Intersection (l,r) -> rectSum (minBound l) (minBound r)
+        | Subtraction (l,r) -> minBound l
+;;
+
 let svg s =
-    ""
+    "<html><body><svg width=\"MINBOUND\" height=\"MINBOUND\"> ... </svg></body></html>"
 ;;
 
 
