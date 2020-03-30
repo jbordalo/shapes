@@ -351,7 +351,7 @@ let rec auxSvg s color =
 		Rect (lt, rb) -> "<rect x=\"" ^ string_of_float (fst lt) ^ "\" y=\"" ^ string_of_float (snd lt) ^ "\" width=\"" ^ string_of_float (width s) ^ "\" height=\"" ^ string_of_float (height s) ^ "\" fill=\"" ^ color ^ "\"/>"
 		| Circle (c, r) -> "<circle cx=\"" ^ string_of_float ( fst c ) ^ "\" cy=\"" ^ string_of_float ( snd c ) ^ "\" r=\"" ^ string_of_float r ^ "\" fill=\""^ color ^"\" />"
         | Union (l,r) -> auxSvg l color ^ auxSvg r color
-        | Intersection (l,r) -> failwith "No idea yet"
+        | Intersection (l,r) -> auxSvg (Subtraction(l, Subtraction(l, r))) color
         | Subtraction (l,r) -> auxSvg l "black" ^ auxSvg r "white"
 ;;
 
@@ -367,7 +367,7 @@ output_string stdout (svg (Subtraction(Rect((100.,90.),(300.,520.)),Circle((50.,
 output_string stdout (svg (Subtraction(Rect((100.,90.),(300.,520.)), Union(Rect((50., 60.),(36.,40.)) ,Rect((50.,50.),(150., 150.))))));;
 output_string stdout (svg (grid 8 8 100. 100.));;
 output_string stdout (svg (Union((grid 8 8 100. 100.), Subtraction(Circle((400.,400.), 200.), Rect((300.,300.),(500.,500.))))));;
-
+output_string stdout (svg (Intersection(Rect((40.,40.),(500.,500.)), Circle((50.,50.), 500.))));;
 
 (* FUNCTION partition *)
 
