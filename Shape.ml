@@ -303,7 +303,7 @@ let rec sub m n a b =
 
 let grid m n a b =  (* @pre: n,m > 0 *)
     Subtraction( Rect((0.0,0.0),((float_of_int m)*.a,(float_of_int n)*.b)), 
-		sub (m-1) (n-1) a b)
+		sub (m) (n) a b)
 ;;
 
 (* FUNCTION countBasicRepetitions *)
@@ -346,11 +346,11 @@ let height r = (* @pre: r is Rect(_,_) *)
 		Rect(l, r) -> snd r -. snd l
 ;;
 
-let auxSvg s color =
+let rec auxSvg s color =
 	match s with
 		Rect (lt, rb) -> "<rect x=\"" ^ string_of_float (fst lt) ^ "\" y=\"" ^ string_of_float (snd lt) ^ "\" width=\"" ^ string_of_float (width s) ^ "\" height=\"" ^ string_of_float (height s) ^ "\" fill=\"" ^ color ^ "\"/>"
 		| Circle (c, r) -> "<circle cx=\"" ^ string_of_float ( fst c ) ^ "\" cy=\"" ^ string_of_float ( snd c ) ^ "\" r=\"" ^ string_of_float r ^ "\" fill=\""^ color ^"\" />"
-        | Union (l,r) -> auxSvg l "black" ^ auxSvg r "black" 
+        | Union (l,r) -> auxSvg l color ^ auxSvg r color
         | Intersection (l,r) -> failwith "No idea yet"
         | Subtraction (l,r) -> auxSvg l "black" ^ auxSvg r "white"
 ;;
@@ -364,6 +364,8 @@ output_string stdout (svg (Rect((100.,100.),(300.,300.))));;
 output_string stdout (svg (Circle((100.,100.),300.)));;
 output_string stdout (svg (Union(Rect((100.,100.),(300.,300.)),Circle((50.,50.),150.))));;
 output_string stdout (svg (Subtraction(Rect((100.,90.),(300.,520.)),Circle((50.,50.),150.))));;
+output_string stdout (svg (Subtraction(Rect((100.,90.),(300.,520.)), Union(Rect((50., 60.),(36.,40.)) ,Rect((50.,50.),(150., 150.))))));;
+output_string stdout (svg (grid 8 8 100. 50.));;
 
 (* FUNCTION partition *)
 
