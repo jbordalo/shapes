@@ -303,7 +303,7 @@ let rec sub m n a b =
 
 let grid m n a b =  (* @pre: n,m > 0 *)
     Subtraction( Rect((0.0,0.0),((float_of_int m)*.a,(float_of_int n)*.b)), 
-		sub (m) (n) a b)
+		sub m n a b)
 ;;
 
 (* FUNCTION countBasicRepetitions *)
@@ -369,6 +369,25 @@ output_string stdout (svg (grid 8 8 100. 50.));;
 
 (* FUNCTION partition *)
 
+let emptyIntersection s1 s2 = 
+	match (minBound (Intersection(s1, s2))) with
+		Rect( tl, br) ->
+				let p = ( min (fst tl)(fst br) +. (abs_float ((fst tl)-.(fst br))), min (snd tl)(snd br) +. abs_float ((snd tl)-.(snd br))) in
+				not (belongs p s1 && belongs p s2)
+;;
+
+(* Test empty intersection: (Very Basic) *)
+(* True *)
+(* emptyIntersection (Rect((1.0, 0.0 ), (3.0, 2.0))) (Circle ((6.0, 6.0), 1.0))*)
+(* False *)
+(* emptyIntersection (Rect((1.0, 0.0 ), (3.0, 2.0))) (Rect((2.0, 0.0 ), (6.0, 2.0)))*)
+
+(* TODO: Intersection/Subtraction with Unions *)
 let partition s =
-    [s]
+	match s with 
+	Rect(_,_) -> [s]
+	|Circle (_,_) -> [s]
+	| Union(s1,s2) -> if (emptyIntersection s1 s2) then partition s1 @ partition s2 else [s]
+	| Intersection(s1,s2) -> if (emptyIntersection s1 s2) then [] else [s]
+	| Subtraction(s1,s2) -> if (emptyIntersection s1 s2) then partition s1 else [s]
 ;;
