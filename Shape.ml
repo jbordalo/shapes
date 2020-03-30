@@ -365,7 +365,9 @@ output_string stdout (svg (Circle((100.,100.),300.)));;
 output_string stdout (svg (Union(Rect((100.,100.),(300.,300.)),Circle((50.,50.),150.))));;
 output_string stdout (svg (Subtraction(Rect((100.,90.),(300.,520.)),Circle((50.,50.),150.))));;
 output_string stdout (svg (Subtraction(Rect((100.,90.),(300.,520.)), Union(Rect((50., 60.),(36.,40.)) ,Rect((50.,50.),(150., 150.))))));;
-output_string stdout (svg (grid 8 8 100. 50.));;
+output_string stdout (svg (grid 8 8 100. 100.));;
+output_string stdout (svg (Union((grid 8 8 100. 100.), Subtraction(Circle((400.,400.), 200.), Rect((300.,300.),(500.,500.))))));;
+
 
 (* FUNCTION partition *)
 
