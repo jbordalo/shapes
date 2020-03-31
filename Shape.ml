@@ -232,7 +232,7 @@ let rec minBound s =
 		| Circle (c, r) -> Rect ((fst c-.r, fst c-.r), (snd c+.r,snd c+.r))
         | Union (l,r) -> rectSum (minBound l) (minBound r)
         | Intersection (l,r) -> rectSum (minBound l) (minBound r)
-        | Subtraction (l,r) -> rectsum (minBound l) (minBound r)
+        | Subtraction (l,r) -> rectSum (minBound l) (minBound r)
 ;;
 
 let rec minBoundSvg s =
@@ -412,7 +412,7 @@ let rec auxSvg s color =
 ;;
 
 let svg s =
-	let minimum = minBound s in
+	let minimum = minBoundSvg s in
     	"<html>\n<body>\n<svg width=\"" ^ string_of_float (width minimum) ^ "\" height=\"" ^ string_of_float (height minimum) ^ "\">\n"^ auxSvg s "black" ^"</svg>\n</body>\n</html>"
 ;;
 
