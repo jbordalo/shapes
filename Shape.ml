@@ -165,7 +165,7 @@ let rec density p s =
 
 (* FUNCTION which *)
 
-(* Not sure about a lot of things*)
+(* TODO Not sure about a lot of shit*)
 let rec which p s =
   	if belongs p s then
 			match s with
@@ -374,8 +374,10 @@ output_string stdout (svg (Subtraction(Rect((100.,90.),(300.,520.)),Circle((50.,
 let emptyIntersection s1 s2 = 
 	match (minBound (Intersection(s1, s2))) with
 		Rect( tl, br) ->
-				let p = ( min (fst tl)(fst br) +. (abs_float ((fst tl)-.(fst br))), min (snd tl)(snd br) +. abs_float ((snd tl)-.(snd br))) in
-				not (belongs p s1 && belongs p s2)
+			let x = min (fst tl)(fst br) +. (abs_float ((fst tl)-.(fst br))) in
+				let y =  min (snd tl)(snd br) +. abs_float ((snd tl)-.(snd br)) in
+					let p = ( x, y) in
+						not (belongs p s1 && belongs p s2)
 ;;
 
 (* Test empty intersection: (Very Basic) *)
@@ -384,12 +386,29 @@ let emptyIntersection s1 s2 =
 (* False *)
 (* emptyIntersection (Rect((1.0, 0.0 ), (3.0, 2.0))) (Rect((2.0, 0.0 ), (6.0, 2.0)))*)
 
+(*
+let rec ISUnion s = (*Pre: s is either a Intersection or a Subtraction *)
+	match s with 
+	Intersection (s1,s2)-> 
+	| Subtraction (s1, s2 ->  
+;;
+*)
+let aux s2 s3 = 
+	 if (emptyIntersection s3 s2)
+				 then [s3] else partition (Subtraction (s3, s2)) 
+				;;
+
 (* TODO: Intersection/Subtraction with Unions *)
-let partition s =
+let rec partition s =
 	match s with 
 	Rect(_,_) -> [s]
 	|Circle (_,_) -> [s]
 	| Union(s1,s2) -> if (emptyIntersection s1 s2) then partition s1 @ partition s2 else [s]
 	| Intersection(s1,s2) -> if (emptyIntersection s1 s2) then [] else [s]
-	| Subtraction(s1,s2) -> if (emptyIntersection s1 s2) then partition s1 else [s]
+	| Subtraction(s1,s2) -> if (emptyIntersection s1 s2) 
+			then partition s1 
+		else match s1 with Union (s3,s4) -> if (emptyIntersection s3 s4) 
+			then (aux s2 s3) @ (aux s2 s4)
+			else [s]
+		|_-> [s]
 ;;
