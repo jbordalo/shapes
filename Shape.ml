@@ -250,21 +250,21 @@ let rec row m n a b =
 		let ny = float_of_int n in
 			let both_odd = n mod 2 = 1 && m mod 2 = 1 in
 				let both_even = n mod 2 = 0 && m mod 2 = 0 in
-		if m = 1 && n mod 2 = 1 
+		if m = 1 && n mod 2 = 0
 				then Rect((0.0, (ny-.1.0)*.b),(a,ny*.b)) 
-		else if m = 2 && n mod 2 = 0
+		else if m = 2 && n mod 2 = 1
 			then Rect(((mx-.1.0)*.a, (ny-.1.0)*.b),(mx*.a, ny*.b))
 		else if both_odd || both_even
-			then Union (
-					Rect(((mx-.1.0)*.a, (ny-.1.0)*.b),(mx*.a, ny*.b)), row (m-1) n a b
-				)
-		else row (m-1) n a b
+			then row (m-1) n a b
+		else Union (
+						Rect(((mx-.1.0)*.a, (ny-.1.0)*.b),(mx*.a, ny*.b)), row (m-1) n a b
+			   )
 ;;
-(* Both col and row even numbers : Union (Rect ((3., 1.), (4., 2.)), Rect ((1., 1.), (2., 2.)))*)
+(* Both col and row even numbers : Union (Rect ((2., 1.), (3., 2.)), Rect ((0., 1.), (1., 2.)))*)
 (* row 4 2 1.0 1.0 *)
-(* Both col and row odd numbers : Union (Rect ((6., 4.), (7., 5.)), Union (Rect ((4., 4.), (5., 5.)), Union (Rect ((2., 4.), (3., 5.)), Rect ((0., 4.), (1., 5.))))) *)
+(* Both col and row odd numbers : Union (Rect ((5., 4.), (6., 5.)), Union (Rect ((3., 4.), (4., 5.)), Rect ((1., 4.), (2., 5.)))) *)
 (* row 7 5 1.0 1.0 *)
-(* Col even and row odd: Union (Rect ((3., 5.), (4., 6.)), Rect ((1., 5.), (2., 6.))) *)
+(* Col even and row odd: Union (Rect ((4., 5.), (5., 6.)), Union (Rect ((2., 5.), (3., 6.)), Rect ((0., 5.), (1., 6.)))) *)
 (* row 5 6 1.0 1.0 *)
 
 
@@ -274,37 +274,51 @@ let rec col m n a b =
 		let ny = float_of_int n in
 			let both_odd = n mod 2 = 1 && m mod 2 = 1 in
 				let both_even = n mod 2 = 0 && m mod 2 = 0 in
-		if n = 1 && m mod 2 = 1
+		if n = 1 && m mod 2 = 0
 			then Rect(((mx-.1.0)*.a, 0.0),(mx*.a, b))
-		else if n = 2 && m mod 2 = 0
+		else if n = 2 && m mod 2 = 1
 			then Rect(((mx-.1.0)*.a, (ny-.1.0)*.b),(mx*.a, ny*.b))
 		else if both_odd || both_even
-			then Union (
-					Rect(((mx-.1.0)*.a, (ny-.1.0)*.b),(mx*.a, ny*.b)), col m (n-1) a b
+			then col m (n-1) a b
+		else Union (
+						Rect(((mx-.1.0)*.a, (ny-.1.0)*.b),(mx*.a, ny*.b)), col m (n-1) a b
 				)
-		else col m (n-1) a b
 ;;
-(* Both col and row even numbers : Rect ((3., 1.), (4., 2.) *)
+(* Both col and row even numbers : Rect ((3., 0.), (4., 1.)) *)
 (* col 4 2 1.0 1.0 *)
-(* Both col and row odd numbers : Union (Rect ((6., 4.), (7., 5.)), Union (Rect ((6., 2.), (7., 3.)), Rect ((6., 0.), (7., 1.)))) *)
+(* Both col and row odd numbers : Union (Rect ((6., 3.), (7., 4.)), Rect ((6., 1.), (7., 2.))) *)
 (* col 7 5 1.0 1.0 *)
-(* Col even and row odd: Union (Rect ((4., 4.), (5., 5.)), Union (Rect ((4., 2.), (5., 3.)), Rect ((4., 0.), (5., 1.))))*)
+(* Col even and row odd: Union (Rect ((4., 5.), (5., 6.)), Union (Rect ((4., 3.), (5., 4.)), Rect ((4., 1.), (5., 2.))))*)
 (* col 5 6 1.0 1.0 *)
 
-let rec sub m n a b =
-	if n = 1 && m = 1 
-		then Rect((0.0,0.0),(a,b))
-	else if n = 1 
-		then row m n a b
-	else if m = 1 
-		then col m n a b
-	else Union(row m n a b, sub m (n-1) a b)
+let rec grid m n a b =
+	let empty = Rect ((1.0, 1.0), (0.0, 0.0)) in 
+		if n <= 1 && m <= 1 
+			then empty
+		else if n = 1 
+			then row m n a b
+		else if m = 1 
+			then col m n a b
+		else Union(row m n a b, grid m (n-1) a b)
 ;;
-
-let grid m n a b =  (* @pre: n,m > 0 *)
-    Subtraction( Rect((0.0,0.0),((float_of_int m)*.a,(float_of_int n)*.b)), 
-		sub m n a b)
-;;
+(* TEST : grid 6 6 1.0 1.0;; *)
+(* Union
+ (Union (Rect ((4., 5.), (5., 6.)),
+   Union (Rect ((2., 5.), (3., 6.)), Rect ((0., 5.), (1., 6.)))),
+ Union
+  (Union (Rect ((5., 4.), (6., 5.)),
+    Union (Rect ((3., 4.), (4., 5.)), Rect ((1., 4.), (2., 5.)))),
+  Union
+   (Union (Rect ((4., 3.), (5., 4.)),
+     Union (Rect ((2., 3.), (3., 4.)), Rect ((0., 3.), (1., 4.)))),
+   Union
+    (Union (Rect ((5., 2.), (6., 3.)),
+      Union (Rect ((3., 2.), (4., 3.)), Rect ((1., 2.), (2., 3.)))),
+    Union
+     (Union (Rect ((4., 1.), (5., 2.)),
+       Union (Rect ((2., 1.), (3., 2.)), Rect ((0., 1.), (1., 2.)))),
+     Union (Rect ((5., 0.), (6., 1.)),
+      Union (Rect ((3., 0.), (4., 1.)), Rect ((1., 0.), (2., 1.)))))))))*)
 
 (* FUNCTION countBasicRepetitions *)
 (* TODO - if there are 4 shapes equal in pairs what number should this function return?*)
@@ -320,7 +334,7 @@ let rec countBasicRepetitions s =
 	| Subtraction (s1, s2) -> count s1 s2
 and count s1 s2 =
 	if s1 = s2 
-	then 2 + countBasicRepetitions s1 + countBasicRepetitions s2 
+		then 2 + countBasicRepetitions s1 + countBasicRepetitions s2 
 	else countBasicRepetitions s1 + countBasicRepetitions s2
 ;;
 
