@@ -229,7 +229,7 @@ let rectAnd r1 r2 =
 let rec minBound s =
 	match s with
 		Rect (_, _) -> s
-		| Circle (c, r) -> Rect ((fst c-.r, fst c-.r), (snd c+.r,snd c+.r))
+		| Circle (c, r) -> Rect ((fst c-.r, snd c-.r), (fst c+.r,snd c+.r))
         | Union (l,r) -> rectSum (minBound l) (minBound r)
         | Intersection (l,r) -> rectSum (minBound l) (minBound r)
         | Subtraction (l,r) -> rectSum (minBound l) (minBound r)
@@ -238,7 +238,7 @@ let rec minBound s =
 let rec minBoundSvg s =
 	match s with
 		Rect (_, _) -> s
-		| Circle (c, r) -> Rect ((fst c-.r, fst c-.r), (snd c+.r,snd c+.r))
+		| Circle (c, r) -> Rect ((fst c-.r, snd c-.r), (snd c+.r,fst c+.r))
         | Union (l,r) -> rectSum (minBoundSvg l) (minBoundSvg r)
         | Intersection (l,r) -> rectAnd (minBoundSvg l) (minBoundSvg r)
         | Subtraction (l,r) -> minBoundSvg l
@@ -438,7 +438,7 @@ let emptyIntersection s1 s2 =
 			let x = (fst tl +. fst br)/. 2.0 in
 				let y =  (snd tl +. snd br)/. 2.0 in
 					let p = (x, y) in
-						not (belongs p s1 && belongs p s2)
+						(not (belongs p s1 && belongs p s2))
 ;;
 
 (* Test empty intersection: (Very Basic) *)
@@ -449,7 +449,8 @@ let emptyIntersection s1 s2 =
 (* False *)
 (* emptyIntersection (Circle ((2.0,2.0), 1.0)) (Circle ((4.0, 2.0), 1.0))*)
 (* False *)
-(* emptyIntersection (Rect((1.0, 0.0 ), (2.0, 3.0))) (Rect((2.0, 0.0 ), (3.0, 3.0)))*)
+(* emptyIntersection (Rect((1.0, 0.0 ), (2.0, 3.0))) (Rect((2.0, 0.0 ), (3.0, 3.0))) *)
+
 
 (*
 let rec ISUnion s = (*Pre: s is either a Intersection or a Subtraction *)
@@ -458,10 +459,6 @@ let rec ISUnion s = (*Pre: s is either a Intersection or a Subtraction *)
 	| Subtraction (s1, s2 ->  
 ;;
 *)
-let aux s2 s3 = 
-	 if (emptyIntersection s3 s2)
-				 then [s3] else partition (Subtraction (s3, s2)) 
-				;;
 
 (* TODO: Intersection/Subtraction with Unions *)
 let rec partition s =
@@ -476,4 +473,17 @@ let rec partition s =
 			then (aux s2 s3) @ (aux s2 s4)
 			else [s]
 		|_-> [s]
+
+and aux s2 s3 = 
+	 if (emptyIntersection s3 s2)
+				 then [s3] else partition (Subtraction (s3, s2)) 
 ;;
+
+
+
+
+(*Tests:*)
+(* partition (Circle((4.,4.), 2.)) *)
+(* partition (Union(rect1, rect2)) *)
+(* partition (Subtraction(Union(Circle((2.,3.), 1.),Circle((6.,3.), 1.)), Circle((4.,4.), 2.)))*)
+
