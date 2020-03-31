@@ -165,7 +165,7 @@ let rec density p s =
 
 (* FUNCTION which *)
 
-(* Not sure about a lot of shit*)
+(* Not sure about a lot of things*)
 let rec which p s =
   	if belongs p s then
 			match s with
@@ -225,7 +225,6 @@ let rectAnd r1 r2 =
 (* rectSum (Rect ((0.,0.),(3.,3.))) (Rect((3.,2.),(6.,5.)));; *)
 (* rectAnd (Rect ((0.,0.),(2.,2.))) (Rect((1.,1.),(4.,4.)));; *)
 
-(* A n B = fuck all *)
 let rec minBound s =
 	match s with
 		Rect (_, _) -> s
@@ -357,7 +356,7 @@ let rec auxSvg s color =
 
 let svg s =
 	let minimum = minBound s in
-    	"<html><body><svg width=\"" ^ string_of_float (width minimum) ^ "\" height=\"" ^ string_of_float (height minimum) ^ "\">"^ auxSvg s "black" ^"</svg></body></html>"
+    	"<html>\n<body>\n<svg width=\"" ^ string_of_float (width minimum) ^ "\" height=\"" ^ string_of_float (height minimum) ^ "\">\n"^ auxSvg s "black" "" ^"</svg>\n</body>\n</html>"
 ;;
 
 output_string stdout (svg (Rect((100.,100.),(300.,300.))));;
@@ -368,6 +367,7 @@ output_string stdout (svg (Subtraction(Rect((100.,90.),(300.,520.)), Union(Rect(
 output_string stdout (svg (grid 8 8 100. 100.));;
 output_string stdout (svg (Union((grid 8 8 100. 100.), Subtraction(Circle((400.,400.), 200.), Rect((300.,300.),(500.,500.))))));;
 output_string stdout (svg (Intersection(Rect((40.,40.),(500.,500.)), Circle((50.,50.), 500.))));;
+output_string stdout (svg (Subtraction(Rect((100.,90.),(300.,520.)),Circle((50.,50.),150.))));;
 
 (* FUNCTION partition *)
 
