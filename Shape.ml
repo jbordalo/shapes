@@ -231,6 +231,15 @@ let rec minBound s =
 		Rect (_, _) -> s
 		| Circle (c, r) -> Rect ((fst c-.r, fst c-.r), (snd c+.r,snd c+.r))
         | Union (l,r) -> rectSum (minBound l) (minBound r)
+        | Intersection (l,r) -> rectSum (minBound l) (minBound r)
+        | Subtraction (l,r) -> rectsum (minBound l) (minBound r)
+;;
+
+let rec minBoundSvg s =
+	match s with
+		Rect (_, _) -> s
+		| Circle (c, r) -> Rect ((fst c-.r, fst c-.r), (snd c+.r,snd c+.r))
+        | Union (l,r) -> rectSum (minBound l) (minBound r)
         | Intersection (l,r) -> rectAnd (minBound l) (minBound r)
         | Subtraction (l,r) -> minBound l
 ;;
@@ -419,6 +428,7 @@ output_string stdout (svg (Intersection(Circle((50.,50.), 500.), Rect((40.,40.),
 output_string stdout (svg (Subtraction(Rect((100.,90.),(300.,520.)),Circle((50.,50.),150.))));;
 output_string stdout (svg (Subtraction(Circle((50.,50.),150.), Rect((100.,90.),(300.,520.)))));;
 output_string stdout (svg (Subtraction(Circle((50.,50.),50.), Subtraction(Circle((40.,40.),40.),Rect((70.,10.),(90.,30.))))));;
+output_string stdout (svg (Subtraction(Subtraction(Circle((40.,40.),40.),Rect((70.,10.),(90.,30.))), Circle((50.,50.), 50.))));;
 
 (* FUNCTION partition *)
 
