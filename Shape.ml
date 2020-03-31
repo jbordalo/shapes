@@ -345,18 +345,44 @@ let height r = (* @pre: r is Rect(_,_) *)
 		Rect(l, r) -> snd r -. snd l
 ;;
 
+
+Random.self_init();;
+
+
+let mask s id = 
+    "\n<mask id=\""^id^"\">\n
+    "^s^"
+  \n</mask>\n"
+;;
+
+let rec maskAux s id = 
+	match s with
+	Rect (lt, rb) -> "<rect x=\"" ^ string_of_float (fst lt) ^ "\" y=\"" ^ string_of_float (snd lt) ^ "\" width=\"" ^ string_of_float (width s) ^ "\" height=\"" ^ string_of_float (height s) ^ "\" mask=\"url(#" ^ id ^ ")\"/>\n"
+		| Circle (c, r) -> "<circle cx=\"" ^ string_of_float ( fst c ) ^ "\" cy=\"" ^ string_of_float ( snd c ) ^ "\" r=\"" ^ string_of_float r ^ "\" mask=\"url(#"^ id ^")\" />\n"
+        | Union (l,r) -> maskAux l id ^ maskAux r id
+        | Intersection (l,r) -> failwith "inter inside sub"
+			(*maskAux (Subtraction(l, Subtraction(l, r))) string_of_int(Random.int 5000)*)
+			
+        | Subtraction (l,r) -> failwith "sub inside sub"
+			(* let id = string_of_int(Random.int 5000) in
+			maskAux l ^ maskAux l id ^ mask ((auxSvg l "white" ) ^ (auxSvg r "black")) id *)
+
 let rec auxSvg s color =
 	match s with
-		Rect (lt, rb) -> "<rect x=\"" ^ string_of_float (fst lt) ^ "\" y=\"" ^ string_of_float (snd lt) ^ "\" width=\"" ^ string_of_float (width s) ^ "\" height=\"" ^ string_of_float (height s) ^ "\" fill=\"" ^ color ^ "\"/>"
-		| Circle (c, r) -> "<circle cx=\"" ^ string_of_float ( fst c ) ^ "\" cy=\"" ^ string_of_float ( snd c ) ^ "\" r=\"" ^ string_of_float r ^ "\" fill=\""^ color ^"\" />"
+		Rect (lt, rb) -> "<rect x=\"" ^ string_of_float (fst lt) ^ "\" y=\"" ^ string_of_float (snd lt) ^ "\" width=\"" ^ string_of_float (width s) ^ "\" height=\"" ^ string_of_float (height s) ^ "\" fill=\"" ^ color ^ "\"/>\n"
+		| Circle (c, r) -> "<circle cx=\"" ^ string_of_float ( fst c ) ^ "\" cy=\"" ^ string_of_float ( snd c ) ^ "\" r=\"" ^ string_of_float r ^ "\" fill=\""^ color ^"\" />\n"
         | Union (l,r) -> auxSvg l color ^ auxSvg r color
-        | Intersection (l,r) -> auxSvg (Subtraction(l, Subtraction(l, r))) color
-        | Subtraction (l,r) -> auxSvg l "black" ^ auxSvg r "white"
+        | Intersection (l,r) ->
+			let ss = Subtraction(l, Subtraction(l,r)) in
+			maskAux ss string_of_int(Random.int 5000)
+        | Subtraction (l,r) ->
+			let id = string_of_int(Random.int 5000) in
+			maskAux l id ^ mask ((auxSvg l "white" ) ^ (auxSvg r "black")) id
 ;;
 
 let svg s =
 	let minimum = minBound s in
-    	"<html>\n<body>\n<svg width=\"" ^ string_of_float (width minimum) ^ "\" height=\"" ^ string_of_float (height minimum) ^ "\">\n"^ auxSvg s "black" "" ^"</svg>\n</body>\n</html>"
+    	"<html>\n<body>\n<svg width=\"" ^ string_of_float (width minimum) ^ "\" height=\"" ^ string_of_float (height minimum) ^ "\">\n"^ auxSvg s "black" ^"</svg>\n</body>\n</html>"
 ;;
 
 output_string stdout (svg (Rect((100.,100.),(300.,300.))));;
@@ -367,7 +393,9 @@ output_string stdout (svg (Subtraction(Rect((100.,90.),(300.,520.)), Union(Rect(
 output_string stdout (svg (grid 8 8 100. 100.));;
 output_string stdout (svg (Union((grid 8 8 100. 100.), Subtraction(Circle((400.,400.), 200.), Rect((300.,300.),(500.,500.))))));;
 output_string stdout (svg (Intersection(Rect((40.,40.),(500.,500.)), Circle((50.,50.), 500.))));;
+output_string stdout (svg (Intersection(Circle((50.,50.), 500.), Rect((40.,40.),(500.,500.)))));;
 output_string stdout (svg (Subtraction(Rect((100.,90.),(300.,520.)),Circle((50.,50.),150.))));;
+output_string stdout (svg (Subtraction(Circle((50.,50.),150.), Rect((100.,90.),(300.,520.)))));;
 
 (* FUNCTION partition *)
 
