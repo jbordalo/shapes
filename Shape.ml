@@ -225,6 +225,7 @@ let rectAnd r1 r2 =
 (* rectSum (Rect ((0.,0.),(3.,3.))) (Rect((3.,2.),(6.,5.)));; *)
 (* rectAnd (Rect ((0.,0.),(2.,2.))) (Rect((1.,1.),(4.,4.)));; *)
 
+(* TODO CHANGE TO ENUNCIADO'S REQUIREMENTS *)
 let rec minBound s =
 	match s with
 		Rect (_, _) -> s
@@ -345,9 +346,12 @@ let height r = (* @pre: r is Rect(_,_) *)
 		Rect(l, r) -> snd r -. snd l
 ;;
 
-
-Random.self_init();;
-
+let genID = 
+    let idBase = ref 0 in
+        fun () ->
+            idBase := !idBase + 1;
+            "id" ^ (Printf.sprintf "%04d" !idBase)
+;;
 
 let mask s id = 
     "\n<mask id=\""^id^"\">\n
@@ -373,10 +377,14 @@ let rec auxSvg s color =
 		| Circle (c, r) -> "<circle cx=\"" ^ string_of_float ( fst c ) ^ "\" cy=\"" ^ string_of_float ( snd c ) ^ "\" r=\"" ^ string_of_float r ^ "\" fill=\""^ color ^"\" />\n"
         | Union (l,r) -> auxSvg l color ^ auxSvg r color
         | Intersection (l,r) ->
-			let ss = Subtraction(l, Subtraction(l,r)) in
-			maskAux ss string_of_int(Random.int 5000)
+			let id = genID() in
+				let ss = Subtraction(l, Subtraction(l,r)) in
+			auxSvg (ss) color
+		(* | Subtraction (l, Subtraction(ll, rr)) ->
+			let id = genID() in
+			maskAux l id ^ mask ((auxSvg ll "white" ) ^ (auxSvg rr "black")) id ^ *)
         | Subtraction (l,r) ->
-			let id = string_of_int(Random.int 5000) in
+			let id = genID() in
 			maskAux l id ^ mask ((auxSvg l "white" ) ^ (auxSvg r "black")) id
 ;;
 
@@ -396,6 +404,7 @@ output_string stdout (svg (Intersection(Rect((40.,40.),(500.,500.)), Circle((50.
 output_string stdout (svg (Intersection(Circle((50.,50.), 500.), Rect((40.,40.),(500.,500.)))));;
 output_string stdout (svg (Subtraction(Rect((100.,90.),(300.,520.)),Circle((50.,50.),150.))));;
 output_string stdout (svg (Subtraction(Circle((50.,50.),150.), Rect((100.,90.),(300.,520.)))));;
+output_string stdout (svg (Subtraction(Circle((50.,50.),50.), Subtraction(Circle((40.,40.),40.),Rect((70.,10.),(90.,30.))))));;
 
 (* FUNCTION partition *)
 
