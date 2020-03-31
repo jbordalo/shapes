@@ -239,9 +239,9 @@ let rec minBoundSvg s =
 	match s with
 		Rect (_, _) -> s
 		| Circle (c, r) -> Rect ((fst c-.r, fst c-.r), (snd c+.r,snd c+.r))
-        | Union (l,r) -> rectSum (minBound l) (minBound r)
-        | Intersection (l,r) -> rectAnd (minBound l) (minBound r)
-        | Subtraction (l,r) -> minBound l
+        | Union (l,r) -> rectSum (minBoundSvg l) (minBoundSvg r)
+        | Intersection (l,r) -> rectAnd (minBoundSvg l) (minBoundSvg r)
+        | Subtraction (l,r) -> minBoundSvg l
 ;;
 
 (* minBound (Circle((2.,2.), 2.));; *)
@@ -433,11 +433,11 @@ output_string stdout (svg (Subtraction(Subtraction(Circle((40.,40.),40.),Rect((7
 (* FUNCTION partition *)
 
 let emptyIntersection s1 s2 = 
-	match (minBound (Intersection(s1, s2))) with
+	match (minBoundSvg (Intersection(s1, s2))) with
 		Rect( tl, br) ->
-			let x = min (fst tl)(fst br) +. (abs_float ((fst tl)-.(fst br))) in
-				let y =  min (snd tl)(snd br) +. abs_float ((snd tl)-.(snd br)) in
-					let p = ( x, y) in
+			let x = (fst tl +. fst br)/. 2.0 in
+				let y =  (snd tl +. snd br)/. 2.0 in
+					let p = (x, y) in
 						not (belongs p s1 && belongs p s2)
 ;;
 
@@ -446,6 +446,10 @@ let emptyIntersection s1 s2 =
 (* emptyIntersection (Rect((1.0, 0.0 ), (3.0, 2.0))) (Circle ((6.0, 6.0), 1.0))*)
 (* False *)
 (* emptyIntersection (Rect((1.0, 0.0 ), (3.0, 2.0))) (Rect((2.0, 0.0 ), (6.0, 2.0)))*)
+(* False *)
+(* emptyIntersection (Circle ((2.0,2.0), 1.0)) (Circle ((4.0, 2.0), 1.0))*)
+(* False *)
+(* emptyIntersection (Rect((1.0, 0.0 ), (2.0, 3.0))) (Rect((2.0, 0.0 ), (3.0, 3.0)))*)
 
 (*
 let rec ISUnion s = (*Pre: s is either a Intersection or a Subtraction *)
