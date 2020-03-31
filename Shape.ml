@@ -379,7 +379,7 @@ let genID =
 let mask s id = 
     "\n<mask id=\""^id^"\">\n
     "^s^"
-  \n</mask>\n"
+  </mask>\n"
 ;;
 
 let rec maskAux s id = 
@@ -387,12 +387,12 @@ let rec maskAux s id =
 	Rect (lt, rb) -> "<rect x=\"" ^ string_of_float (fst lt) ^ "\" y=\"" ^ string_of_float (snd lt) ^ "\" width=\"" ^ string_of_float (width s) ^ "\" height=\"" ^ string_of_float (height s) ^ "\" mask=\"url(#" ^ id ^ ")\"/>\n"
 		| Circle (c, r) -> "<circle cx=\"" ^ string_of_float ( fst c ) ^ "\" cy=\"" ^ string_of_float ( snd c ) ^ "\" r=\"" ^ string_of_float r ^ "\" mask=\"url(#"^ id ^")\" />\n"
         | Union (l,r) -> maskAux l id ^ maskAux r id
-        | Intersection (l,r) -> failwith "inter inside sub"
-			(*maskAux (Subtraction(l, Subtraction(l, r))) string_of_int(Random.int 5000)*)
-			
-        | Subtraction (l,r) -> failwith "sub inside sub"
-			(* let id = string_of_int(Random.int 5000) in
-			maskAux l ^ maskAux l id ^ mask ((auxSvg l "white" ) ^ (auxSvg r "black")) id *)
+        | Intersection (l,r) -> (*failwith "inter inside sub"*)
+			let algebra = Subtraction(l, Subtraction(l, r)) in
+			maskAux algebra id
+        | Subtraction (l,r) ->
+			let id = genID() in
+			maskAux l id ^ (*maskAux l id ^*) mask ((auxSvg l "white" ) ^ (auxSvg r "white" (*"black"*))) id
 
 let rec auxSvg s color =
 	match s with
@@ -400,20 +400,21 @@ let rec auxSvg s color =
 		| Circle (c, r) -> "<circle cx=\"" ^ string_of_float ( fst c ) ^ "\" cy=\"" ^ string_of_float ( snd c ) ^ "\" r=\"" ^ string_of_float r ^ "\" fill=\""^ color ^"\" />\n"
         | Union (l,r) -> auxSvg l color ^ auxSvg r color
         | Intersection (l,r) ->
+			let ss = Subtraction(l, Subtraction(l,r)) in
+			auxSvg ss color
+		| Subtraction (Subtraction(a, b), c) ->
 			let id = genID() in
-				let ss = Subtraction(l, Subtraction(l,r)) in
-			auxSvg (ss) color
-		(* | Subtraction (l, Subtraction(ll, rr)) ->
-			let id = genID() in
-			maskAux l id ^ mask ((auxSvg ll "white" ) ^ (auxSvg rr "black")) id ^ *)
+			maskAux a id ^ mask ((auxSvg a "white" ) ^ (auxSvg (Union(b, c)) "black")) id
         | Subtraction (l,r) ->
 			let id = genID() in
 			maskAux l id ^ mask ((auxSvg l "white" ) ^ (auxSvg r "black")) id
 ;;
 
+(* minBound is giving crap results for svg size. Gotta be minimum bounds plus the x for leftmost figure *)
+
 let svg s =
 	let minimum = minBoundSvg s in
-    	"<html>\n<body>\n<svg width=\"" ^ string_of_float (width minimum) ^ "\" height=\"" ^ string_of_float (height minimum) ^ "\">\n"^ auxSvg s "black" ^"</svg>\n</body>\n</html>"
+    	"<html>\n<body>\n<svg width=\"" ^ "500"(*string_of_float (width minimum)*) ^ "\" height=\"" ^ "500"(*string_of_float (height minimum)*) ^ "\">\n"^ auxSvg s "black" ^"</svg>\n</body>\n</html>"
 ;;
 
 output_string stdout (svg (Rect((100.,100.),(300.,300.))));;
@@ -422,13 +423,20 @@ output_string stdout (svg (Union(Rect((100.,100.),(300.,300.)),Circle((50.,50.),
 output_string stdout (svg (Subtraction(Rect((100.,90.),(300.,520.)),Circle((50.,50.),150.))));;
 output_string stdout (svg (Subtraction(Rect((100.,90.),(300.,520.)), Union(Rect((50., 60.),(36.,40.)) ,Rect((50.,50.),(150., 150.))))));;
 output_string stdout (svg (grid 8 8 100. 100.));;
-output_string stdout (svg (Union((grid 8 8 100. 100.), Subtraction(Circle((400.,400.), 200.), Rect((300.,300.),(500.,500.))))));;
+output_string stdout (svg (Union((grid 8 8 100. 100.), Subtraction(Circle((400.,400.), 200.), Rect((290.,290.),(510.,510.))))));;
 output_string stdout (svg (Intersection(Rect((40.,40.),(500.,500.)), Circle((50.,50.), 500.))));;
 output_string stdout (svg (Intersection(Circle((50.,50.), 500.), Rect((40.,40.),(500.,500.)))));;
 output_string stdout (svg (Subtraction(Rect((100.,90.),(300.,520.)),Circle((50.,50.),150.))));;
 output_string stdout (svg (Subtraction(Circle((50.,50.),150.), Rect((100.,90.),(300.,520.)))));;
 output_string stdout (svg (Subtraction(Circle((50.,50.),50.), Subtraction(Circle((40.,40.),40.),Rect((70.,10.),(90.,30.))))));;
 output_string stdout (svg (Subtraction(Subtraction(Circle((40.,40.),40.),Rect((70.,10.),(90.,30.))), Circle((50.,50.), 50.))));;
+
+output_string stdout (svg (Subtraction(Circle((80.,80.), 60.), Circle((80.,80.), 20.))));;
+output_string stdout (svg (Subtraction(Circle((80.,80.), 60.), Rect((115.,20.), (160.,80.)))));;
+output_string stdout (svg (Subtraction(Subtraction(Circle((80.,80.), 60.),Circle((80.,80.),20.)), Rect((115.,20.), (160., 80.)))));;
+
+output_string stdout (svg (Intersection(Rect((100.,200.),(600.,600.)), Rect((400.,100.),(900.,400.)))));;
+output_string stdout (svg (Subtraction(Intersection(Rect((100.,200.),(600.,600.)), Rect((400.,100.),(900.,400.))), Circle((600.,700.), 100.))));;
 
 (* FUNCTION partition *)
 
