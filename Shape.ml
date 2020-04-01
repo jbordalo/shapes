@@ -385,12 +385,13 @@ let rec maskAux s id =
 	Rect (lt, rb) -> "<rect x=\"" ^ string_of_float (fst lt) ^ "\" y=\"" ^ string_of_float (snd lt) ^ "\" width=\"" ^ string_of_float (width s) ^ "\" height=\"" ^ string_of_float (height s) ^ "\" mask=\"url(#" ^ id ^ ")\"/>\n"
 		| Circle (c, r) -> "<circle cx=\"" ^ string_of_float ( fst c ) ^ "\" cy=\"" ^ string_of_float ( snd c ) ^ "\" r=\"" ^ string_of_float r ^ "\" mask=\"url(#"^ id ^")\" />\n"
         | Union (l,r) -> maskAux l id ^ maskAux r id
-        | Intersection (l,r) -> (*failwith "inter inside sub"*)
-			let algebra = Subtraction(l, Subtraction(l, r)) in
-			auxSvg algebra "black"
-        | Subtraction (l,r) ->
-			let id = genID() in
-			maskAux l id ^ (* maskAux l id ^ *) mask ((auxSvg l "white" ) ^ (auxSvg r "black" (* "black" *) )) id
+        | Intersection (l,r) -> failwith "inter inside sub"
+			(*let algebra = Subtraction(l, Subtraction(l, r)) in
+			auxSvg algebra "black"*)
+        | Subtraction (l,r) -> failwith "sub inside sub"
+			(* let id = genID() in
+			maskAux l id ^ (* maskAux l id ^ *) mask ((auxSvg l "white" ) ^ (auxSvg r "black" (* "black" *) )) id *)
+;;
 
 let rec auxSvg s color =
 	match s with
@@ -421,6 +422,7 @@ let svg s =
 
 (* TODO TEST FOR SOMETHING LIKE SUB(A, INTER(B,C)) *)
 (* TODO TEST FOR EMPTY STUFF *)
+(* TODO TEST FOR A-B SUCH THAT AnB IS EMPTY *)
 
 output_string stdout (svg (Rect((100.,100.),(300.,300.))));;
 output_string stdout (svg (Circle((100.,100.),300.)));;
@@ -463,19 +465,57 @@ let rec boundP s =
 ;;
 
 
+(*let boundaries r1 r2 =
+	match r1, r2 with
+		Rect((x, y), (f,g)), Rect((z, w), (l,p)) ->
+			let a = z>x && l<f in
+				let b =  w>z && p<g in
+					if a then (
+						if b then r1
+						else 
+							Union(Rect((x,y),(z,g)),Rect((l, y),(f,g)))
+						)
+					else (
+						if b then
+							Union(Rect((x,y),(f, w)), Rect((x, p),(f,g))) 
+						else
+							r1	
+							)
+;;*)
+
 let boundaries r1 r2 =
 	match r1, r2 with
-		Rect(tl1, br1), Rect(tl2, br2) ->
-			if  (fist tl2 <= fst tl1 && snd tl2 <= snd tl1 && fst br2 >= fst br1 && snd br1 >= snd br1) 
-				then Rect ((1.0, 1.0), (0.0, 0.0))
-			else (*TODO*)
+		Rect((x, y), (f,g)), Rect((z, w), (l,p)) ->
+			let a = z>x in 
+				 let b = l<f in
+				let c =  w>z in
+					let d = p<g in
+					if a then (
+						if not (b) then 
+							if not (c || d) then Rect((x,y),(z,g)) (* erre1 *)
+							else r1
+						else (* A e B *)
+							if c && d then  
+								Union(Rect((x,y),(z,g)),Rect((l, y),(f,g))) (* union *)
+							else 
+								r1	
+						)
+					else (
+						if b then 
+							if not (c && d) then r1
+							else Rect((l, y),(f,g)) (* erre2 *)
+						else (* nA e nB *)
+							if not (c && d) then r1
+							else
+								Union(Rect((x,y),(f, w)), Rect((x, p),(f,g))) 
+							)
 ;;
 
 (* Union (Rect ((2., 2.), (3., 3.)), Rect ((4., 2.), (5., 3.))) *)
 (* Rect ((2., 2.), (3., 3.)) *)
 (* Rect ((4., 2.), (5., 3.)) *)
 (* Rect ((4., 2.), (5., 3.)) *)
-boundaries ((2.,2.), (5.,3.)) ((3.,1.),(4.,4.));;
+boundaries (Rect((2.,2.), (5.,3.))) (Rect((3.,1.),(4.,4.)));;
 boundaries ((2.,2.), (5.,3.)) ((3.,1.),(6.,4.));;
 boundaries ((2.,2.), (5.,3.)) ((2.,1.),(4.,4.));;
 boundaries ((2.,2.), (5.,3.)) ((2.,1.),(4.,2.5));;
