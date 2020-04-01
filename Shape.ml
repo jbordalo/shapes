@@ -561,9 +561,17 @@ let rec emptyIntersection s1 s2 =
 						(auxl p s1 s2) && (auxl p s2 s1)
 and auxl p s s0 =
 	match s with 
-	Union (l, r) -> if emptyIntersection l r then (not (emptyIntersection l s0 || emptyIntersection r s0)) else (not (belongs p s))
+	Union (l, r) -> if emptyIntersection l r then (emptyIntersection l s0 && emptyIntersection r s0) else (not (belongs p s))
 	| _ -> (not (belongs p s))
 ;;
+emptyIntersection (Union(Circle((2.,2.), 1.),Circle((5.,2.), 1.))) (Union( Circle((2.,4.), 2.),Circle((5.,4.),2.)));;
+boundP (Intersection(Union(Circle((2.,2.), 1.),Circle((5.,2.), 1.)), Union( Circle((2.,4.), 2.),Circle((5.,4.),2.))));;
+
+emptyIntersection (Circle((2.,2.), 1.)) (Union( Circle((2.,4.), 2.),Circle((5.,4.),2.))) 
+emptyIntersection (Circle((5.,2.), 1.)) (Union( Circle((2.,4.), 2.),Circle((5.,4.),2.))) 
+
+not(false || false)
+ (belongs (3.5, 2.5) (Union( Circle((2.,4.), 2.),Circle((5.,4.),2.))) )
 
 boundP ( Intersection(Union(Circle((2.,3.), 1.),Circle((6.,3.), 1.)), Union(Circle((4.,4.), 2.), Rect((2.,5.),(6.,6.)))));;
 emptyIntersection (Union(Circle((2.,3.), 1.),Circle((6.,3.), 1.))) (Union(Circle((4.,4.), 2.), Rect((2.,5.),(6.,6.))));;
@@ -603,13 +611,14 @@ let rec partition s =
 			)
 	| Subtraction(s1,s2) -> if (emptyIntersection s1 s2) 
 			then partition s1 
-		else 
-				match s1 with 
-				Union (l,r)-> if (emptyIntersection l r) 
-								then (subaux s2 l) @ (subaux s2 r)
-						else [s]
-				| _-> [s]
-
+		else (	
+			let a = boundP s in
+				match s1,s2, a with 
+					Union (l,r),_ ,_ -> subtr l r s2 s
+					| _, Union (l,r),_ -> subtr l r s1 s
+					| _,_ ,Union(l, r) -> [Subtraction(l,s2); Subtraction(r,s2)]
+					| _,_,_ -> [Subtraction(a,s2)] 
+		)		
 and subaux s2 s3 = 
 	 if (emptyIntersection s3 s2)
 				 then [s3] else partition (Subtraction (s3, s2)) 
@@ -619,12 +628,23 @@ and intaux s2 s3 =
 and inter l r s1 s =
 	if (emptyIntersection l r) 
 							then (intaux s1 l) @ (intaux s1 r)
-						else [s] ;;
+						else [s]
+and subtr l r s1 s = 
+	if (emptyIntersection l r) 
+						then (subaux s1 l) @ (subaux s1 r)
+				else [s]
+	;;
 
 (*Tests:*)
 (* partition (Circle((4.,4.), 2.)) *)
 (* partition (Union(rect1, rect2)) *)
-partition (Subtraction(Union(Circle((2.,2.), 1.),Circle((5.,2.), 1.)), Union( Circle((1.,4.), 2.),Circle((5.,4.),2.))));;
+partition (Subtraction(Union(Circle((2.,2.), 1.),Circle((5.,2.), 1.)), Union( Circle((2.,4.), 2.),Circle((5.,4.),2.))));;
+emptyIntersection (Union(Circle((2.,2.), 1.),Circle((5.,2.), 1.))) (Union( Circle((2.,4.), 2.),Circle((5.,4.),2.)));;
+
+
+
+
+
 partition (Subtraction( Rect((2.,2.),(7.,4.)) ,Rect((4.,1.), (5.,5.))));;
 boundP (Subtraction( Rect((2.,2.),(7.,4.)) ,Rect((4.,1.), (5.,5.))));;
 emptyIntersection (Union(Circle((2.,2.), 1.),Circle((5.,2.), 1.))) (Union( Circle((2.,4.), 2.),Circle((5.,4.),2.)));;
