@@ -685,7 +685,7 @@ partition (Subtraction(Union(Circle((2.,3.), 1.),Circle((6.,3.), 1.)), (Circle((
 
 partition (Subtraction(Union(Circle((200.,200.),100.),Circle((300.,200.),100.)),Rect((200.,200.),(300.,400.))));;
 
-(* The island is different [Subtraction (Rect ((20., 20.), (140., 140.)),
-  Rect ((115., 20.), (160., 80.)))] *)
+(* list =[Subtraction (Subtraction (Circle ((80., 80.), 60.), Circle ((80., 80.), 20.)),
+ Rect ((115., 20.), (160., 80.)))] *)
 partition (Subtraction(Subtraction(Circle((80.,80.), 60.),Circle((80.,80.),20.)), Rect((115.,20.), (160., 80.))));;
 
