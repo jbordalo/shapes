@@ -238,7 +238,7 @@ let rec minBound s =
 let rec minBoundSvg s =
 	match s with
 		Rect (_, _) -> s
-		| Circle (c, r) -> Rect ((fst c-.r, snd c-.r), (snd c+.r,fst c+.r))
+		| Circle (c, r) -> Rect ((fst c-.r, snd c-.r), (fst c+.r,snd c+.r))
         | Union (l,r) -> rectSum (minBoundSvg l) (minBoundSvg r)
         | Intersection (l,r) -> rectAnd (minBoundSvg l) (minBoundSvg r)
         | Subtraction (l,r) -> minBoundSvg l
@@ -440,14 +440,35 @@ output_string stdout (svg (Subtraction(Intersection(Rect((100.,200.),(600.,600.)
 
 (* FUNCTION partition *)
 
-let emptyIntersection s1 s2 = 
-	match (minBoundSvg (Intersection(s1, s2))) with
-		Rect( tl, br) ->
+let rec boundP s =
+	match s with
+		Rect (_, _) -> s
+		| Circle (c, r) -> Rect ((fst c-.r, snd c-.r), (fst c+.r,snd c+.r))
+        | Union (l,r) -> rectSum (boundP l) (boundP r)
+        | Intersection (l,r) -> rectAnd (boundP l) (boundP r)
+        | Subtraction (l,r) -> boundP l
+
+let rec emptyIntersection s1 s2 = 
+	match (boundP (Intersection(s1, s2))) with
+		Rect(tl, br) ->
 			let x = (fst tl +. fst br)/. 2.0 in
 				let y =  (snd tl +. snd br)/. 2.0 in
 					let p = (x, y) in
-						(not (belongs p s1 && belongs p s2))
+						(auxl p s1 s2) && (auxl p s2 s1)
+and auxl p s s0 =
+	match s with 
+	Union (l, r) -> (not (emptyIntersection l s0 || emptyIntersection r s0))
+	|_ -> (not (belongs p s))
 ;;
+
+emptyIntersection(Circle((2.,3.), 1.)) (Circle((4.,4.), 2.));;
+emptyIntersection(Circle((6.,3.), 1.)) (Circle((4.,4.), 2.));;
+emptyIntersection (Rect((1.0, 0.0 ), (3.0, 2.0))) (Circle ((6.0, 6.0), 1.0));;
+emptyIntersection (Rect((1.0, 0.0 ), (3.0, 2.0))) (Rect((2.0, 0.0 ), (6.0, 2.0)));;
+emptyIntersection (Circle ((2.0,2.0), 1.0)) (Circle ((4.0, 2.0), 1.0));;
+emptyIntersection (Rect((1.0, 0.0 ), (2.0, 3.0))) (Rect((2.0, 0.0 ), (3.0, 3.0)));;
+emptyIntersection rect1 rect2;;
+emptyIntersection (Union(Circle((2.,3.), 1.),Circle((6.,3.), 1.))) (Circle((4.,4.), 2.));;
 
 (* Test empty intersection: (Very Basic) *)
 (* True *)
@@ -460,14 +481,6 @@ let emptyIntersection s1 s2 =
 (* emptyIntersection (Rect((1.0, 0.0 ), (2.0, 3.0))) (Rect((2.0, 0.0 ), (3.0, 3.0))) *)
 
 
-(*
-let rec ISUnion s = (*Pre: s is either a Intersection or a Subtraction *)
-	match s with 
-	Intersection (s1,s2)-> 
-	| Subtraction (s1, s2 ->  
-;;
-*)
-
 (* TODO: Intersection/Subtraction with Unions *)
 let rec partition s =
 	match s with 
@@ -477,21 +490,29 @@ let rec partition s =
 	| Intersection(s1,s2) -> if (emptyIntersection s1 s2) then [] else [s]
 	| Subtraction(s1,s2) -> if (emptyIntersection s1 s2) 
 			then partition s1 
-		else match s1 with Union (s3,s4) -> if (emptyIntersection s3 s4) 
-			then (aux s2 s3) @ (aux s2 s4)
-			else [s]
-		|_-> [s]
+		else 
+				match s1 with 
+				Union (l,r) -> if (emptyIntersection l r) 
+								then (aux s2 l) @ (aux s2 r)
+						else [s]
+				| _->[s]
 
 and aux s2 s3 = 
 	 if (emptyIntersection s3 s2)
 				 then [s3] else partition (Subtraction (s3, s2)) 
 ;;
 
-
-
-
 (*Tests:*)
 (* partition (Circle((4.,4.), 2.)) *)
 (* partition (Union(rect1, rect2)) *)
-(* partition (Subtraction(Union(Circle((2.,3.), 1.),Circle((6.,3.), 1.)), Circle((4.,4.), 2.)))*)
+partition (Subtraction(Union(Circle((2.,2.), 1.),Circle((5.,2.), 1.)), Union( Circle((1.,4.), 2.),Circle((5.,4.),2.))));;
+
+emptyIntersection (Union(Circle((2.,2.), 1.),Circle((5.,2.), 1.))) (Union( Circle((2.,4.), 2.),Circle((5.,4.),2.)));;
+
+
+
+
+
+partition (Subtraction(Union(Circle((2.,3.), 1.),Circle((6.,3.), 1.)), (Circle((4.,4.), 2.))));;
+emptyIntersection (Union(Circle((2.,3.), 1.),Circle((6.,3.), 1.))) (Circle((4.,4.), 2.));;
 
