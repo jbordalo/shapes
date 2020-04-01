@@ -628,7 +628,7 @@ let rec partition s =
 					Union (l,r),_ ,_ -> subtr l r s2 s
 					| _, Union (l,r),_ -> subtr l r s1 s
 					| _,_ ,Union(l, r) -> [Subtraction(l,s2); Subtraction(r,s2)]
-					| _,_,_ -> [Subtraction(a,s2)] 
+					| _,_,_ -> [s]
 		)		
 and subaux s2 s3 = 
 	 if (emptyIntersection s3 s2)
@@ -670,12 +670,17 @@ partition (Subtraction(  Rect((2.,6.),(4.,9.)) , Rect((1.,8.),(5.,10.)) ));;
 partition (Subtraction(   Rect((1.,12.),(4.,14.)) ,  Rect((3.,11.),(5.,15.)) ));;
 
 
-(*?????*)
+(*list = [Intersection (Circle ((2., 3.), 1.), Circle ((4., 4.), 2.));
+ Intersection (Circle ((6., 3.), 1.), Circle ((4., 4.), 2.))]  for both vv*)
 partition(Intersection((Circle((4.,4.), 2.)),Union(Circle((2.,3.), 1.),Circle((6.,3.), 1.))));;
+partition(Intersection(Union(Circle((2.,3.), 1.),Circle((6.,3.), 1.)) ,(Circle((4.,4.), 2.))));;
 
-(*?????*)
+(*list =[Intersection (Circle ((2., 3.), 1.),  Union (Circle ((4., 4.), 2.), Rect ((2., 5.), (6., 6.))));
+Intersection (Circle ((6., 3.), 1.), Union (Circle ((4., 4.), 2.), Rect ((2., 5.), (6., 6.))))]*)
 partition(Intersection(Union(Circle((2.,3.), 1.),Circle((6.,3.), 1.)), Union(Circle((4.,4.), 2.), Rect((2.,5.),(6.,6.)))));;
-(*?????*)
+
+(*list = [Subtraction (Circle ((2., 3.), 1.), Circle ((4., 4.), 2.));
+ Subtraction (Circle ((6., 3.), 1.), Circle ((4., 4.), 2.))]*)
 partition (Subtraction(Union(Circle((2.,3.), 1.),Circle((6.,3.), 1.)), (Circle((4.,4.), 2.))));;
 
 partition (Subtraction(Union(Circle((200.,200.),100.),Circle((300.,200.),100.)),Rect((200.,200.),(300.,400.))));;
