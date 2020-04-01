@@ -426,15 +426,13 @@ let rec auxSvg s color =
 			maskAux l id ^ mask ((auxSvg l "white" ) ^ (auxSvg r "black")) id
 ;;
 
-(* minBound is giving crap results for svg size. Gotta be minimum bounds plus the x for leftmost figure *)
+(* minBound is giving bad results for svg size. Gotta be minimum bounds plus the x for leftmost figure *)
 
 let svg s =
 	let minimum = minBoundSvg s in
     	"<html>\n<body>\n<svg width=\"" ^ "1500"(*string_of_float (width minimum)*) ^ "\" height=\"" ^ "1500"(*string_of_float (height minimum)*) ^ "\">\n"^ auxSvg s "black" ^"</svg>\n</body>\n</html>"
 ;;
 
-(* TODO TEST FOR SOMETHING LIKE SUB(A, INTER(B,C)) *)
-(* TODO TEST FOR EMPTY STUFF *)
 
 output_string stdout (svg (Rect((100.,100.),(300.,300.))));;
 output_string stdout (svg (Circle((100.,100.),300.)));;
@@ -679,4 +677,10 @@ partition(Intersection((Circle((4.,4.), 2.)),Union(Circle((2.,3.), 1.),Circle((6
 partition(Intersection(Union(Circle((2.,3.), 1.),Circle((6.,3.), 1.)), Union(Circle((4.,4.), 2.), Rect((2.,5.),(6.,6.)))));;
 (*?????*)
 partition (Subtraction(Union(Circle((2.,3.), 1.),Circle((6.,3.), 1.)), (Circle((4.,4.), 2.))));;
+
+partition (Subtraction(Union(Circle((200.,200.),100.),Circle((300.,200.),100.)),Rect((200.,200.),(300.,400.))));;
+
+(* The island is different [Subtraction (Rect ((20., 20.), (140., 140.)),
+  Rect ((115., 20.), (160., 80.)))] *)
+partition (Subtraction(Subtraction(Circle((80.,80.), 60.),Circle((80.,80.),20.)), Rect((115.,20.), (160., 80.))));;
 
