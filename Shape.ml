@@ -496,16 +496,6 @@ output_string stdout (svg (Union(Circle((500.,500.), 100.), (Subtraction(Circle(
 
 (* FUNCTION partition *)
 
-let rec boundP s =
-	match s with
-		Rect (_, _) -> s
-		| Circle (c, r) -> Rect ((fst c-.r, snd c-.r), (fst c+.r,snd c+.r))
-    | Union (l,r) -> rectSum (boundP l) (boundP r)
-    | Intersection (l,r) -> rectAnd (boundP l) (boundP r)
-    | Subtraction (l,r) -> boundaries (boundP l) (boundP r)
-;;
-
-
 (*let boundaries r1 r2 =
 	match r1, r2 with
 		Rect((x, y), (f,g)), Rect((z, w), (l,p)) ->
@@ -555,6 +545,15 @@ let boundaries r1 r2 =
 							)
 ;;
 
+let rec boundP s =
+	match s with
+		Rect (_, _) -> s
+		| Circle (c, r) -> Rect ((fst c-.r, snd c-.r), (fst c+.r,snd c+.r))
+    | Union (l,r) -> rectSum (boundP l) (boundP r)
+    | Intersection (l,r) -> rectAnd (boundP l) (boundP r)
+    | Subtraction (l,r) -> boundaries (boundP l) (boundP r)
+;;
+
 (* Tests : *)
 (* 1. Expected : Union(Rect ((2., 2.), (4., 4.)), Rect ((5., 2.), (7., 4.)))*)
 boundaries (Rect((2.,2.),(7.,4.))) (Rect((4.,1.), (5.,5.)) );;
@@ -568,18 +567,6 @@ boundaries (  Rect((2.,6.),(4.,9.)) ) ( Rect((1.,8.),(5.,10.)) );;
 boundaries (Rect((2.,2.),(7.,4.))) (Rect((1.,1.), (3.,5.)) );;
 (* 6. Expected : Rect ((1., 12.), (3., 14.)) *)
 boundaries (  Rect((1.,12.),(4.,14.)) ) ( Rect((3.,11.),(5.,15.)) );;
-
-
-
-(* Union (Rect ((2., 2.), (3., 3.)), Rect ((4., 2.), (5., 3.))) *)
-(* Rect ((2., 2.), (3., 3.)) *)
-(* Rect ((4., 2.), (5., 3.)) *)
-(* Rect ((4., 2.), (5., 3.)) *)
-boundaries (Rect((2.,2.), (5.,3.))) (Rect((3.,1.),(4.,4.)));;
-boundaries ((2.,2.), (5.,3.)) ((3.,1.),(6.,4.));;
-boundaries ((2.,2.), (5.,3.)) ((2.,1.),(4.,4.));;
-boundaries ((2.,2.), (5.,3.)) ((2.,1.),(4.,2.5));;
-boundaries ((3.,1.),(4.,4.))  ((2.,2.), (5.,6.));;
 
 let rec emptyIntersection s1 s2 = 
 	match (boundP (Intersection(s1, s2))) with
@@ -596,11 +583,8 @@ and auxl p s s0 =
 emptyIntersection (Union(Circle((2.,2.), 1.),Circle((5.,2.), 1.))) (Union( Circle((2.,4.), 2.),Circle((5.,4.),2.)));;
 boundP (Intersection(Union(Circle((2.,2.), 1.),Circle((5.,2.), 1.)), Union( Circle((2.,4.), 2.),Circle((5.,4.),2.))));;
 
-emptyIntersection (Circle((2.,2.), 1.)) (Union( Circle((2.,4.), 2.),Circle((5.,4.),2.))) 
-emptyIntersection (Circle((5.,2.), 1.)) (Union( Circle((2.,4.), 2.),Circle((5.,4.),2.))) 
-
-not(false || false)
- (belongs (3.5, 2.5) (Union( Circle((2.,4.), 2.),Circle((5.,4.),2.))) )
+emptyIntersection (Circle((2.,2.), 1.)) (Union( Circle((2.,4.), 2.),Circle((5.,4.),2.)));; 
+emptyIntersection (Circle((5.,2.), 1.)) (Union( Circle((2.,4.), 2.),Circle((5.,4.),2.)));;
 
 boundP ( Intersection(Union(Circle((2.,3.), 1.),Circle((6.,3.), 1.)), Union(Circle((4.,4.), 2.), Rect((2.,5.),(6.,6.)))));;
 emptyIntersection (Union(Circle((2.,3.), 1.),Circle((6.,3.), 1.))) (Union(Circle((4.,4.), 2.), Rect((2.,5.),(6.,6.))));;
