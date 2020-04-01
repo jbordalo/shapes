@@ -457,9 +457,29 @@ let rec boundP s =
 	match s with
 		Rect (_, _) -> s
 		| Circle (c, r) -> Rect ((fst c-.r, snd c-.r), (fst c+.r,snd c+.r))
-        | Union (l,r) -> rectSum (boundP l) (boundP r)
-        | Intersection (l,r) -> rectAnd (boundP l) (boundP r)
-        | Subtraction (l,r) -> boundP l
+    | Union (l,r) -> rectSum (boundP l) (boundP r)
+    | Intersection (l,r) -> rectAnd (boundP l) (boundP r)
+    | Subtraction (l,r) -> boundaries (boundP l) (boundP r)
+;;
+
+
+let boundaries r1 r2 =
+	match r1, r2 with
+		Rect(tl1, br1), Rect(tl2, br2) ->
+			if  (fist tl2 <= fst tl1 && snd tl2 <= snd tl1 && fst br2 >= fst br1 && snd br1 >= snd br1) 
+				then Rect ((1.0, 1.0), (0.0, 0.0))
+			else (*TODO*)
+;;
+
+(* Union (Rect ((2., 2.), (3., 3.)), Rect ((4., 2.), (5., 3.))) *)
+(* Rect ((2., 2.), (3., 3.)) *)
+(* Rect ((4., 2.), (5., 3.)) *)
+(* Rect ((4., 2.), (5., 3.)) *)
+boundaries ((2.,2.), (5.,3.)) ((3.,1.),(4.,4.));;
+boundaries ((2.,2.), (5.,3.)) ((3.,1.),(6.,4.));;
+boundaries ((2.,2.), (5.,3.)) ((2.,1.),(4.,4.));;
+boundaries ((2.,2.), (5.,3.)) ((2.,1.),(4.,2.5));;
+boundaries ((3.,1.),(4.,4.))  ((2.,2.), (5.,6.));;
 
 let rec emptyIntersection s1 s2 = 
 	match (boundP (Intersection(s1, s2))) with
