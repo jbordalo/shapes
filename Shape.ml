@@ -297,7 +297,20 @@ let rec col m n a b =
 (* col 4 2 1.0 1.0 *)
 (* Both col and row odd numbers : Union (Rect ((6., 3.), (7., 4.)), Rect ((6., 1.), (7., 2.))) *)
 (* col 7 5 1.0 1.0 *)
-(* Col even and row odd: Union (Rect ((4., 5.), (5., 6.)), Union (Rect ((4., 3.), (5., 4.)), Rect ((4., 1.), (5., 2.))))*)
+(* Col even and row odd: Union (Rect ((4., 5.), (5., 6.)), Union (
+let rect1 = Rect ((0.0, 0.0), (5.0, 2.0));;
+let rect2 = Rect ((2.0, 2.0), (7.0, 7.0));;
+let c1 = Circle((2.0,2.0), 2.0);;
+let shape1 = Union (rect1, rect2);;
+let shapeSubtract = Subtraction(rect2, c1);;
+
+(* MORE EXAMPLES *)
+
+let rectOne = Rect ((0.0, 0.0), (5.0, 4.0));;
+let rectTwo = Rect ((2.0, 2.0), (7.0, 7.0));;
+let shapeOverlapUnion = Union (rectOne, rectTwo);;
+let shapeIntersection = Intersection (rectOne, rectTwo);;
+Rect ((4., 3.), (5., 4.)), Rect ((4., 1.), (5., 2.))))*)
 (* col 5 6 1.0 1.0 *)
 
 let rec grid m n a b =
@@ -636,24 +649,34 @@ and subtr l r s1 s =
 	;;
 
 (*Tests:*)
-(* partition (Circle((4.,4.), 2.)) *)
-(* partition (Union(rect1, rect2)) *)
+(*list = [Circle ((4., 4.), 2.)] *)
+partition (Circle((4.,4.), 2.));;
+(*list = [Rect ((3.3, 3.), (6., 5.))] *)
+partition (Rect ((3.3,3.),(6.,5.)));;
+(*list = [Union (Rect ((0., 0.), (5., 2.)), Rect ((2., 2.), (7., 7.)))] *)
+partition (Union(rect1, rect2));;
+(*list =[Subtraction (Circle ((2., 2.), 1.)  Union (Circle ((2., 4.), 2.), Circle ((5., 4.), 2.)));
+ Subtraction (Circle ((5., 2.), 1.),  Union (Circle ((2., 4.), 2.), Circle ((5., 4.), 2.)))]*)
 partition (Subtraction(Union(Circle((2.,2.), 1.),Circle((5.,2.), 1.)), Union( Circle((2.,4.), 2.),Circle((5.,4.),2.))));;
-emptyIntersection (Union(Circle((2.,2.), 1.),Circle((5.,2.), 1.))) (Union( Circle((2.,4.), 2.),Circle((5.,4.),2.)));;
-
-
-
-
-
+(*list = [Subtraction (Rect ((2., 2.), (4., 4.)), Rect ((4., 1.), (5., 5.)));
+ Subtraction (Rect ((5., 2.), (7., 4.)), Rect ((4., 1.), (5., 5.)))]*)
 partition (Subtraction( Rect((2.,2.),(7.,4.)) ,Rect((4.,1.), (5.,5.))));;
-boundP (Subtraction( Rect((2.,2.),(7.,4.)) ,Rect((4.,1.), (5.,5.))));;
-emptyIntersection (Union(Circle((2.,2.), 1.),Circle((5.,2.), 1.))) (Union( Circle((2.,4.), 2.),Circle((5.,4.),2.)));;
+(*list = [Subtraction (Rect ((2., 1.), (4., 2.)), Rect ((1., 2.), (5., 4.)));
+ Subtraction (Rect ((2., 4.), (4., 5.)), Rect ((1., 2.), (5., 4.)))]*)
+partition (Subtraction(  Rect((2.,1.),(4.,5.)) , Rect((1.,2.),(5.,4.)) ));;
+(*list = [Subtraction (Rect ((3., 4.), (6., 6.)), Rect ((2., 2.), (7., 4.)))] *)
+partition (Subtraction(Rect((3.,3.), (6.,6.)) , Rect((2.,2.),(7.,4.))));;
+(*list = [Subtraction (Rect ((2., 6.), (4., 8.)), Rect ((1., 8.), (5., 10.)))] *)
+partition (Subtraction(  Rect((2.,6.),(4.,9.)) , Rect((1.,8.),(5.,10.)) ));;
+(*list = [Subtraction (Rect ((1., 12.), (3., 14.)), Rect ((3., 11.), (5., 15.)))]*)
+partition (Subtraction(   Rect((1.,12.),(4.,14.)) ,  Rect((3.,11.),(5.,15.)) ));;
 
+
+(*?????*)
 partition(Intersection((Circle((4.,4.), 2.)),Union(Circle((2.,3.), 1.),Circle((6.,3.), 1.))));;
-emptyIntersection (Circle((4.,4.), 2.)) (Union(Circle((2.,3.), 1.),Circle((6.,3.), 1.)));;
 
-
+(*?????*)
 partition(Intersection(Union(Circle((2.,3.), 1.),Circle((6.,3.), 1.)), Union(Circle((4.,4.), 2.), Rect((2.,5.),(6.,6.)))));;
-
+(*?????*)
 partition (Subtraction(Union(Circle((2.,3.), 1.),Circle((6.,3.), 1.)), (Circle((4.,4.), 2.))));;
 
