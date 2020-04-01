@@ -486,30 +486,46 @@ let rec boundP s =
 let boundaries r1 r2 =
 	match r1, r2 with
 		Rect((x, y), (f,g)), Rect((z, w), (l,p)) ->
-			let a = z>x in 
-				 let b = l<f in
-				let c =  w>z in
-					let d = p<g in
-					if a then (
-						if not (b) then 
-							if not (c || d) then Rect((x,y),(z,g)) (* erre1 *)
-							else r1
-						else (* A e B *)
+			let a = z>x in (*x1r2 > x1r1*)
+				 let b = l<f in (*x2r2 < x2r1*)
+				let c =  w>y in (*y1r2 > y1r1*)
+					let d = p<g in (*y2r2 < y2r1*)
+					if a then ( 
+						if not (b) then (*x1r2 > x1r1  &  x2r2 > =x2r1 *) 
+							(if not (c || d) then Rect((x,y),(z,g)) (* erre1 *)
+							else r1)
+						else (* A e B *) (*x1r2 > x1r1  &  x2r2 < x2r1 *) 
 							if c && d then  
-								Union(Rect((x,y),(z,g)),Rect((l, y),(f,g))) (* union *)
+								r1
 							else 
-								r1	
+								Union(Rect((x,y),(z,g)),Rect((l, y),(f,g))) (* union *)
 						)
-					else (
-						if b then 
-							if not (c && d) then r1
-							else Rect((l, y),(f,g)) (* erre2 *)
-						else (* nA e nB *)
-							if not (c && d) then r1
-							else
-								Union(Rect((x,y),(f, w)), Rect((x, p),(f,g))) 
+					else ( 
+						if b then (*x1r2 <= x1r1 && x2r2 < x2r1*)
+							if (c && d) then r1 else Rect((l, y),(f,g)) (* erre2 *)
+						else (* nA e nB *) (*x1r2 <= x1r1 && x2r2 >= x2r1*)
+							if (c && d) then  Union(Rect((x,y),(f, w)), Rect((x, p),(f,g))) 
+								else if not d then Rect((x, y),(f,w)) 
+									else if not c then Rect((x, p),(f,g)) 
+									else r1
 							)
 ;;
+
+(* Tests : *)
+(* 1. Expected : Union(Rect ((2., 2.), (4., 4.)), Rect ((5., 2.), (7., 4.)))*)
+boundaries (Rect((2.,2.),(7.,4.))) (Rect((4.,1.), (5.,5.)) );;
+(* 2. Expected : Union (Rect ((2., 1.), (4., 2.)), Rect ((2., 4.), (4., 5.)))*)
+boundaries (  Rect((2.,1.),(4.,5.)) ) ( Rect((1.,2.),(5.,4.)) );;
+(* 3. Expected : Rect ((3., 4.), (6., 6.)) *)
+boundaries (Rect((3.,3.), (6.,6.)) ) (Rect((2.,2.),(7.,4.)));;
+(* 4. Expected : Rect ((2., 6.), (4., 8.)) *)
+boundaries (  Rect((2.,6.),(4.,9.)) ) ( Rect((1.,8.),(5.,10.)) );;
+(* 5. Expected : Rect ((3., 2.), (7., 4.)) *)
+boundaries (Rect((2.,2.),(7.,4.))) (Rect((1.,1.), (3.,5.)) );;
+(* 6. Expected : Rect ((1., 12.), (3., 14.)) *)
+boundaries (  Rect((1.,12.),(4.,14.)) ) ( Rect((3.,11.),(5.,15.)) );;
+
+
 
 (* Union (Rect ((2., 2.), (3., 3.)), Rect ((4., 2.), (5., 3.))) *)
 (* Rect ((2., 2.), (3., 3.)) *)
@@ -555,11 +571,6 @@ emptyIntersection (Union(Circle((2.,3.), 1.),Circle((6.,3.), 1.))) (Circle((4.,4
 (* emptyIntersection (Circle ((2.0,2.0), 1.0)) (Circle ((4.0, 2.0), 1.0))*)
 (* False *)
 (* emptyIntersection (Rect((1.0, 0.0 ), (2.0, 3.0))) (Rect((2.0, 0.0 ), (3.0, 3.0))) *)
-let inter l r s1 s =
-	if (emptyIntersection l r) 
-							then (intaux s1 l) @ (intaux s1 r)
-						else [s] ;;
-
 (* TODO: Intersection/Subtraction with Unions *)
 let rec partition s =
 	match s with 
@@ -582,7 +593,7 @@ let rec partition s =
 				Union (l,r)-> if (emptyIntersection l r) 
 								then (subaux s2 l) @ (subaux s2 r)
 						else [s]
-				| _->[s] 
+				| _-> [s]
 
 and subaux s2 s3 = 
 	 if (emptyIntersection s3 s2)
@@ -590,13 +601,17 @@ and subaux s2 s3 =
 and intaux s2 s3 = 
 	if (emptyIntersection s3 s2)
 				 then [s3] else partition (Intersection (s3, s2)) 
-;;
+and inter l r s1 s =
+	if (emptyIntersection l r) 
+							then (intaux s1 l) @ (intaux s1 r)
+						else [s] ;;
 
 (*Tests:*)
 (* partition (Circle((4.,4.), 2.)) *)
 (* partition (Union(rect1, rect2)) *)
 partition (Subtraction(Union(Circle((2.,2.), 1.),Circle((5.,2.), 1.)), Union( Circle((1.,4.), 2.),Circle((5.,4.),2.))));;
-
+partition (Subtraction( Rect((2.,2.),(7.,4.)) ,Rect((4.,1.), (5.,5.))));;
+boundP (Subtraction( Rect((2.,2.),(7.,4.)) ,Rect((4.,1.), (5.,5.))));;
 emptyIntersection (Union(Circle((2.,2.), 1.),Circle((5.,2.), 1.))) (Union( Circle((2.,4.), 2.),Circle((5.,4.),2.)));;
 
 partition(Intersection((Circle((4.,4.), 2.)),Union(Circle((2.,3.), 1.),Circle((6.,3.), 1.))));;
