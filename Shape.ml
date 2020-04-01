@@ -422,7 +422,6 @@ let svg s =
 
 (* TODO TEST FOR SOMETHING LIKE SUB(A, INTER(B,C)) *)
 (* TODO TEST FOR EMPTY STUFF *)
-(* TODO TEST FOR A-B SUCH THAT AnB IS EMPTY *)
 
 output_string stdout (svg (Rect((100.,100.),(300.,300.))));;
 output_string stdout (svg (Circle((100.,100.),300.)));;
@@ -452,6 +451,22 @@ output_string stdout
 
 (* Two lobed afro *)
 output_string stdout (svg (Subtraction(Union(Circle((200.,200.),100.),Circle((300.,200.),100.)),Rect((200.,200.),(300.,400.)))));;
+
+(* A-B such that AnB is empty *)
+output_string stdout (svg (Subtraction(Rect((10.,10.),(40.,40.)), Rect((50.,10.),(70.,30.)))));;
+output_string stdout (svg (Subtraction(Rect((10.,10.),(40.,40.)), Circle((60.,50.),10.))));;
+output_string stdout (svg (Subtraction(Rect((10.,10.),(40.,40.)), Union(Rect((50.,10.),(70.,30.)), Circle((60.,50.),10.)))));;
+
+let intr = Intersection(Circle((300.,200.), 100.), Circle((400.,200.),100.));;
+(* Has a border *)
+output_string stdout(svg intr);;
+output_string stdout(svg (Intersection(Circle((400.,200.), 100.), Circle((300.,200.),100.))));;
+
+(* Works but solving border issues *)
+output_string stdout (svg (Subtraction(Rect((200.,100.),(500.,300.)), intr)));;
+
+(* *)
+output_string stdout (svg (Union(Circle((500.,500.), 100.), (Subtraction(Circle((500.,500.), 50.),Circle((500.,500.), 100.))))));;
 
 (* FUNCTION partition *)
 
