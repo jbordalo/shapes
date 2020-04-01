@@ -490,9 +490,12 @@ let rec emptyIntersection s1 s2 =
 						(auxl p s1 s2) && (auxl p s2 s1)
 and auxl p s s0 =
 	match s with 
-	Union (l, r) -> (not (emptyIntersection l s0 || emptyIntersection r s0))
-	|_ -> (not (belongs p s))
+	Union (l, r) -> if emptyIntersection l r then (not (emptyIntersection l s0 || emptyIntersection r s0)) else (not (belongs p s))
+	| _ -> (not (belongs p s))
 ;;
+
+boundP ( Intersection(Union(Circle((2.,3.), 1.),Circle((6.,3.), 1.)), Union(Circle((4.,4.), 2.), Rect((2.,5.),(6.,6.)))));;
+emptyIntersection (Union(Circle((2.,3.), 1.),Circle((6.,3.), 1.))) (Union(Circle((4.,4.), 2.), Rect((2.,5.),(6.,6.))));;
 
 emptyIntersection(Circle((2.,3.), 1.)) (Circle((4.,4.), 2.));;
 emptyIntersection(Circle((6.,3.), 1.)) (Circle((4.,4.), 2.));;
@@ -512,7 +515,10 @@ emptyIntersection (Union(Circle((2.,3.), 1.),Circle((6.,3.), 1.))) (Circle((4.,4
 (* emptyIntersection (Circle ((2.0,2.0), 1.0)) (Circle ((4.0, 2.0), 1.0))*)
 (* False *)
 (* emptyIntersection (Rect((1.0, 0.0 ), (2.0, 3.0))) (Rect((2.0, 0.0 ), (3.0, 3.0))) *)
-
+let inter l r s1 s =
+	if (emptyIntersection l r) 
+							then (intaux s1 l) @ (intaux s1 r)
+						else [s] ;;
 
 (* TODO: Intersection/Subtraction with Unions *)
 let rec partition s =
@@ -520,19 +526,30 @@ let rec partition s =
 	Rect(_,_) -> [s]
 	|Circle (_,_) -> [s]
 	| Union(s1,s2) -> if (emptyIntersection s1 s2) then partition s1 @ partition s2 else [s]
-	| Intersection(s1,s2) -> if (emptyIntersection s1 s2) then [] else [s]
+	| Intersection(s1,s2) -> 
+			if (emptyIntersection s1 s2) 
+				then [] 
+			else (
+					match s1, s2 with 
+						Union (l,r),_ -> inter l r s2 s
+						| _, Union (l,r) -> inter l r s1 s
+						| _,_ ->[s] 
+			)
 	| Subtraction(s1,s2) -> if (emptyIntersection s1 s2) 
 			then partition s1 
 		else 
 				match s1 with 
-				Union (l,r) -> if (emptyIntersection l r) 
-								then (aux s2 l) @ (aux s2 r)
+				Union (l,r)-> if (emptyIntersection l r) 
+								then (subaux s2 l) @ (subaux s2 r)
 						else [s]
-				| _->[s]
+				| _->[s] 
 
-and aux s2 s3 = 
+and subaux s2 s3 = 
 	 if (emptyIntersection s3 s2)
 				 then [s3] else partition (Subtraction (s3, s2)) 
+and intaux s2 s3 = 
+	if (emptyIntersection s3 s2)
+				 then [s3] else partition (Intersection (s3, s2)) 
 ;;
 
 (*Tests:*)
@@ -542,10 +559,11 @@ partition (Subtraction(Union(Circle((2.,2.), 1.),Circle((5.,2.), 1.)), Union( Ci
 
 emptyIntersection (Union(Circle((2.,2.), 1.),Circle((5.,2.), 1.))) (Union( Circle((2.,4.), 2.),Circle((5.,4.),2.)));;
 
+partition(Intersection((Circle((4.,4.), 2.)),Union(Circle((2.,3.), 1.),Circle((6.,3.), 1.))));;
+emptyIntersection (Circle((4.,4.), 2.)) (Union(Circle((2.,3.), 1.),Circle((6.,3.), 1.)));;
 
 
-
+partition(Intersection(Union(Circle((2.,3.), 1.),Circle((6.,3.), 1.)), Union(Circle((4.,4.), 2.), Rect((2.,5.),(6.,6.)))));;
 
 partition (Subtraction(Union(Circle((2.,3.), 1.),Circle((6.,3.), 1.)), (Circle((4.,4.), 2.))));;
-emptyIntersection (Union(Circle((2.,3.), 1.),Circle((6.,3.), 1.))) (Circle((4.,4.), 2.));;
 
