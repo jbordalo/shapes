@@ -266,7 +266,7 @@ let rec row m n a b =
 		else if both_odd || both_even
 			then row (m-1) n a b
 		else Union (
-						Rect(((mx-.1.0)*.a, (ny-.1.0)*.b),(mx*.a, ny*.b)), row (m-1) n a b
+			Rect(((mx-.1.0)*.a, (ny-.1.0)*.b),(mx*.a, ny*.b)), row (m-1) n a b
 			   )
 ;;
 (* Both col and row even numbers : Union (Rect ((2., 1.), (3., 2.)), Rect ((0., 1.), (1., 2.)))*)
@@ -290,7 +290,7 @@ let rec col m n a b =
 		else if both_odd || both_even
 			then col m (n-1) a b
 		else Union (
-						Rect(((mx-.1.0)*.a, (ny-.1.0)*.b),(mx*.a, ny*.b)), col m (n-1) a b
+			Rect(((mx-.1.0)*.a, (ny-.1.0)*.b),(mx*.a, ny*.b)), col m (n-1) a b
 				)
 ;;
 (* Both col and row even numbers : Rect ((3., 0.), (4., 1.)) *)
@@ -356,7 +356,7 @@ let rec countBasicRepetitions s =
 	| Subtraction (s1, s2) -> count s1 s2
 and count s1 s2 =
 	if s1 = s2 
-		then 2 + countBasicRepetitions s1 + countBasicRepetitions s2 
+		then 2 + countBasicRepetitions s1 + countBasicRepetitions s2
 	else countBasicRepetitions s1 + countBasicRepetitions s2
 ;;
 
@@ -395,28 +395,41 @@ let mask s id =
 
 let rec maskAux s id = 
 	match s with
-	Rect (lt, rb) -> "<rect x=\"" ^ string_of_float (fst lt) ^ "\" y=\"" ^ string_of_float (snd lt) ^ "\" width=\"" ^ string_of_float (width s) ^ "\" height=\"" ^ string_of_float (height s) ^ "\" mask=\"url(#" ^ id ^ ")\"/>\n"
-		| Circle (c, r) -> "<circle cx=\"" ^ string_of_float ( fst c ) ^ "\" cy=\"" ^ string_of_float ( snd c ) ^ "\" r=\"" ^ string_of_float r ^ "\" mask=\"url(#"^ id ^")\" />\n"
+    	Rect (lt, rb) -> 
+    		"<rect x=\"" ^ string_of_float (fst lt) 
+    		^ "\" y=\"" ^ string_of_float (snd lt) ^
+    		 "\" width=\"" ^ string_of_float (width s) ^
+    		 "\" height=\"" ^ string_of_float (height s) ^
+    		 "\" mask=\"url(#" ^ id ^ ")\"/>\n"
+		| Circle (c, r) -> 
+			"<circle cx=\"" ^ string_of_float ( fst c ) ^
+			 "\" cy=\"" ^ string_of_float ( snd c ) ^
+			 "\" r=\"" ^ string_of_float r ^
+			 "\" mask=\"url(#"^ id ^")\" />\n"
         | Union (l,r) -> maskAux l id ^ maskAux r id
         | Intersection (l,r) -> failwith "inter inside sub"
-			(*let algebra = Subtraction(l, Subtraction(l, r)) in
-			auxSvg algebra "black"*)
         | Subtraction (l,r) -> failwith "sub inside sub"
-			(* let id = genID() in
-			maskAux l id ^ (* maskAux l id ^ *) mask ((auxSvg l "white" ) ^ (auxSvg r "black" (* "black" *) )) id *)
 ;;
 
 let rec auxSvg s color =
 	match s with
-		Rect (lt, rb) -> "<rect x=\"" ^ string_of_float (fst lt) ^ "\" y=\"" ^ string_of_float (snd lt) ^ "\" width=\"" ^ string_of_float (width s) ^ "\" height=\"" ^ string_of_float (height s) ^ "\" fill=\"" ^ color ^ "\"/>\n"
-		| Circle (c, r) -> "<circle cx=\"" ^ string_of_float ( fst c ) ^ "\" cy=\"" ^ string_of_float ( snd c ) ^ "\" r=\"" ^ string_of_float r ^ "\" fill=\""^ color ^"\" />\n"
+		Rect (lt, rb) -> "<rect x=\"" ^ string_of_float (fst lt) ^
+		 "\" y=\"" ^ string_of_float (snd lt) ^
+		 "\" width=\"" ^ string_of_float (width s) ^
+		 "\" height=\"" ^ string_of_float (height s) ^
+		 "\" fill=\"" ^ color ^ "\"/>\n"
+		| Circle (c, r) -> "<circle cx=\"" ^ string_of_float ( fst c ) ^
+		 "\" cy=\"" ^ string_of_float ( snd c ) ^
+		 "\" r=\"" ^ string_of_float r ^
+		 "\" fill=\""^ color ^"\" />\n"
         | Union (l,r) -> auxSvg l color ^ auxSvg r color
         | Intersection (l,r) ->
 			let ss = Subtraction(l, Subtraction(l,r)) in
 			auxSvg ss color
 		| Subtraction (Subtraction(a, b), c) ->
 			let id = genID() in
-			maskAux a id ^ mask ((auxSvg a "white" ) ^ (auxSvg (Union(b, c)) "black")) id
+			maskAux a id ^ mask ((auxSvg a "white" ) ^
+			 (auxSvg (Union(b, c)) "black")) id
 		| Subtraction (Intersection(li, ri),r) ->
 			(* Comment this to explain, it's insane gotta work the math on paper *)
 			let ss = Subtraction(li, Union(Subtraction(li,ri), r)) in
@@ -430,7 +443,9 @@ let rec auxSvg s color =
 
 let svg s =
 	let minimum = minBoundSvg s in
-    	"<html>\n<body>\n<svg width=\"" ^ "1500"(*string_of_float (width minimum)*) ^ "\" height=\"" ^ "1500"(*string_of_float (height minimum)*) ^ "\">\n"^ auxSvg s "black" ^"</svg>\n</body>\n</html>"
+    	"<html>\n<body>\n<svg width=\"" ^ "1500"(*string_of_float (width minimum)*) ^
+		 "\" height=\"" ^ "1500"(*string_of_float (height minimum)*) ^ "\">\n" 
+		^ auxSvg s "black" ^ "</svg>\n</body>\n</html>"
 ;;
 
 
@@ -518,19 +533,22 @@ let boundaries r1 r2 =
 					let d = p<g in (*y2r2 < y2r1*)
 					if a then ( 
 						if not (b) then (*x1r2 > x1r1  &  x2r2 > =x2r1 *) 
-							(if not (c || d) then Rect((x,y),(z,g)) (* erre1 *)
+							(if not (c || d) then Rect((x,y),(z,g)) (* r'1 *)
 							else r1)
 						else (* A e B *) (*x1r2 > x1r1  &  x2r2 < x2r1 *) 
 							if c && d then  
 								r1
-							else 
-								Union(Rect((x,y),(z,g)),Rect((l, y),(f,g))) (* union *)
+							else
+								(* union *)
+								Union(Rect((x,y),(z,g)),Rect((l, y),(f,g)))
 						)
 					else ( 
 						if b then (*x1r2 <= x1r1 && x2r2 < x2r1*)
-							if (c && d) then r1 else Rect((l, y),(f,g)) (* erre2 *)
+							if (c && d) then r1
+							else Rect((l, y),(f,g)) (* r'2 *)
 						else (* nA e nB *) (*x1r2 <= x1r1 && x2r2 >= x2r1*)
-							if (c && d) then  Union(Rect((x,y),(f, w)), Rect((x, p),(f,g))) 
+							if (c && d) then  
+								Union(Rect((x,y),(f, w)), Rect((x, p),(f,g)))
 								else if not d then Rect((x, y),(f,w)) 
 									else if not c then Rect((x, p),(f,g)) 
 									else r1
@@ -610,7 +628,8 @@ let rec partition s =
 	match s with 
 	Rect(_,_) -> [s]
 	|Circle (_,_) -> [s]
-	| Union(s1,s2) -> if (emptyIntersection s1 s2) then partition s1 @ partition s2 else [s]
+	| Union(s1,s2) -> if (emptyIntersection s1 s2) then 
+							partition s1 @ partition s2 else [s]
 	| Intersection(s1,s2) -> 
 			if (emptyIntersection s1 s2) 
 				then [] 
@@ -627,7 +646,8 @@ let rec partition s =
 				match s1,s2, a with 
 					Union (l,r),_ ,_ -> subtr l r s2 s
 					| _, Union (l,r),_ -> subtr l r s1 s
-					| _,_ ,Union(l, r) -> [Subtraction(l,s2); Subtraction(r,s2)]
+					| _,_ ,Union(l, r) -> 
+										[Subtraction(l,s2); Subtraction(r,s2)]
 					| _,_,_ -> [s]
 		)		
 and subaux s2 s3 = 
