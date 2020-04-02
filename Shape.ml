@@ -204,22 +204,24 @@ let rec which p s =
 
 (* FUNCTION minBound *)
 
-let rectSum r1 r2 =
+let rectSum r1 r2 = (* pre: r1 and r2 are both Rect *)
 	match r1, r2 with
 		Rect(fr1, sr1), Rect(fr2, sr2) ->
 		Rect (
-        	( min (fst fr1) (fst fr2 ) , min (snd fr1 ) (snd fr2 ) ),
-        	( max (fst sr1 ) (fst sr2 ) , max (snd sr1 ) (snd sr2 ) )
+        	(min (fst fr1) (fst fr2) , min (snd fr1) (snd fr2)),
+        	(max (fst sr1) (fst sr2) , max (snd sr1) (snd sr2))
         	 )
+		| _ -> failwith "r1 and r2 not Rects"
 ;;
 
-let rectAnd r1 r2 =
+let rectAnd r1 r2 = (* pre: r1 and r2 are both Rect *)
 	match r1, r2 with
 		Rect(fr1, sr1), Rect(fr2, sr2) ->
 		Rect (
-        	( max (fst fr1) (fst fr2 ) , max (snd fr1 ) (snd fr2 ) ),
-        	( min (fst sr1 ) (fst sr2 ) , min (snd sr1 ) (snd sr2 ) )
+        	(max (fst fr1) (fst fr2) , max (snd fr1) (snd fr2)),
+        	(min (fst sr1) (fst sr2) , min (snd sr1) (snd sr2))
         	 )
+		| _ -> failwith "r1 and r2 not Rects"
 ;;
 
 (* rectSum (Rect ((0.,0.),(3.,3.))) (Rect((3.,2.),(6.,5.)));; *)
@@ -375,11 +377,13 @@ and count s1 s2 =
 let width r = (* @pre: r is Rect(_,_) *)
 	match r with
 		Rect(l, r) -> fst r -. fst  l
+		| _ -> failwith "r not Rect"
 ;;
 
 let height r = (* @pre: r is Rect(_,_) *)
 	match r with
 		Rect(l, r) -> snd r -. snd l
+		| _ -> failwith "r not Rect"
 ;;
 
 let genID = 
@@ -418,7 +422,7 @@ let rec auxSvg s color =
 		 "\" width=\"" ^ string_of_float (width s) ^
 		 "\" height=\"" ^ string_of_float (height s) ^
 		 "\" fill=\"" ^ color ^ "\"/>\n"
-		| Circle (c, r) -> "<circle cx=\"" ^ string_of_float ( fst c ) ^
+		| Circle (c, r) -> "<circle cx=\"" ^ string_of_float (fst c) ^
 		 "\" cy=\"" ^ string_of_float ( snd c ) ^
 		 "\" r=\"" ^ string_of_float r ^
 		 "\" fill=\""^ color ^"\" />\n"
@@ -477,11 +481,14 @@ output_string stdout (svg (Intersection(Circle((50.,50.), 500.), Rect((40.,40.),
 (* Border problem between here *)
 output_string stdout (svg (Subtraction(Rect((100.,90.),(300.,520.)),Circle((50.,50.),150.))));;
 output_string stdout (svg (Subtraction(Circle((50.,50.),150.), Rect((100.,90.),(300.,520.)))));;
+
+(* Dreamworks kid *)
 output_string stdout (svg (Subtraction(Circle((50.,50.),50.), Subtraction(Circle((40.,40.),40.),Rect((70.,10.),(90.,30.))))));;
 
 (* Moon *)
 output_string stdout (svg (Subtraction(Subtraction(Circle((40.,40.),40.),Rect((70.,10.),(90.,30.))), Circle((50.,50.), 50.))));;
 
+(* Donut *)
 output_string stdout (svg (Subtraction(Circle((80.,80.), 60.), Circle((80.,80.), 20.))));;
 output_string stdout (svg (Subtraction(Circle((80.,80.), 60.), Rect((115.,20.), (160.,80.)))));;
 output_string stdout (svg (Subtraction(Subtraction(Circle((80.,80.), 60.),Circle((80.,80.),20.)), Rect((115.,20.), (160., 80.)))));;
@@ -509,6 +516,13 @@ output_string stdout (svg (Subtraction(Rect((200.,100.),(500.,300.)), intr)));;
 (* *)
 output_string stdout (svg (Union(Circle((500.,500.), 100.), (Subtraction(Circle((500.,500.), 50.),Circle((500.,500.), 100.))))));;
 
+output_string stdout (svg (Intersection(Rect((5., -110.0),(15., 110.0)),
+Union(Subtraction(Circle((10.0, 10.0), 100.0), Circle((10.0, 10.0), 90.0)),
+Union(Subtraction(Circle((10.0, 10.0), 80.0), Circle((10.0, 10.0), 70.0)),
+Union(Subtraction(Circle((10.0, 10.0), 60.0), Circle((10.0, 10.0), 60.0)),
+Union(Subtraction(Circle((10.0, 10.0), 40.0), Circle((10.0, 10.0), 30.0)),
+Subtraction(Circle((10.0, 10.0), 20.0), Circle((10.0, 10.0), 10.0)))))))));;
+
 (* FUNCTION partition *)
 
 (*let boundaries r1 r2 =
@@ -529,7 +543,7 @@ output_string stdout (svg (Union(Circle((500.,500.), 100.), (Subtraction(Circle(
 							)
 ;;*)
 
-let boundaries r1 r2 =
+let boundaries r1 r2 = (* pre: r1 and r2 are rects *)
 	match r1, r2 with
 		Rect((x, y), (f,g)), Rect((z, w), (l,p)) ->
 			let a = z>x in (*x1r2 > x1r1*)
@@ -558,21 +572,21 @@ let boundaries r1 r2 =
 									else if not c then Rect((x, p),(f,g)) 
 									else r1
 							)
+		| _ -> failwith "r1 and r2 not Rect"
 ;;
 
 
-
-let rec boundInt r1 r2 =
+let rec boundInt r1 r2 = (* pre: r1 and r2 are both rects *)
 	match r1, r2 with
 		Rect(fr1, sr1), Rect(fr2, sr2) ->
 		Rect (
         	( max (fst fr1) (fst fr2 ) , max (snd fr1 ) (snd fr2 ) ),
         	( min (fst sr1 ) (fst sr2 ) , min (snd sr1 ) (snd sr2 ) )
         	 )
-		| Union(r3,r4), Rect(fr1, sr1) -> Union ( boundInt r3 r2, boundInt r4 r2)
-		| _,_ -> failwith "not expected"
+		| Union(r3,r4), Rect(fr1, sr1) -> 
+								Union ( boundInt r3 r2, boundInt r4 r2)
+		| _ -> failwith "r1 and r2 not Rect"
 ;;
-
 
 
 let rec boundP s =
@@ -605,11 +619,15 @@ let rec emptyIntersection s1 s2 =
 				let y =  (snd tl +. snd br)/. 2.0 in
 					let p = (x, y) in
 						(auxl p s1 s2) && (auxl p s2 s1)
+		| _ -> failwith "Bounds have to be a rectangle"
 and auxl p s s0 =
 	match s with 
-	Union (l, r) -> if emptyIntersection l r then (emptyIntersection l s0 && emptyIntersection r s0) else (not (belongs p s))
+	Union (l, r) -> if emptyIntersection l r then 
+		(emptyIntersection l s0 && emptyIntersection r s0) 
+		else (not (belongs p s))
 	| _ -> (not (belongs p s))
 ;;
+
 emptyIntersection (Union(Circle((2.,2.), 1.),Circle((5.,2.), 1.))) (Union( Circle((2.,4.), 2.),Circle((5.,4.),2.)));;
 boundP (Intersection(Union(Circle((2.,2.), 1.),Circle((5.,2.), 1.)), Union( Circle((2.,4.), 2.),Circle((5.,4.),2.))));;
 
