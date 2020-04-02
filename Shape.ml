@@ -441,11 +441,26 @@ let rec auxSvg s color =
 
 (* minBound is giving bad results for svg size. Gotta be minimum bounds plus the x for leftmost figure *)
 
+let topleftmost r = (* r is a Rect *)
+	match r with
+	Rect(x,y) -> fst x
+	| _ -> failwith "r is not a Rect"
+;;
+
+let bottomrightmost r = (* r is a Rect *)
+	match r with
+	Rect(x,y) -> snd y
+	| _ -> failwith "r is not a Rect"
+;;
+
 let svg s =
 	let minimum = minBoundSvg s in
-    	"<html>\n<body>\n<svg width=\"" ^ "1500"(*string_of_float (width minimum)*) ^
-		 "\" height=\"" ^ "1500"(*string_of_float (height minimum)*) ^ "\">\n" 
-		^ auxSvg s "black" ^ "</svg>\n</body>\n</html>"
+    		"<html>\n<body>\n<svg width=\"" ^ 
+				string_of_float (topleftmost minimum +. width minimum) ^
+    		 "\" height=\"" ^
+				string_of_float (bottomrightmost minimum +. height minimum) ^
+			 "\">\n" 
+    		^ auxSvg s "black" ^ "</svg>\n</body>\n</html>"
 ;;
 
 
