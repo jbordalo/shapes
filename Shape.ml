@@ -545,12 +545,27 @@ let boundaries r1 r2 =
 							)
 ;;
 
+
+
+let rec boundInt r1 r2 =
+	match r1, r2 with
+		Rect(fr1, sr1), Rect(fr2, sr2) ->
+		Rect (
+        	( max (fst fr1) (fst fr2 ) , max (snd fr1 ) (snd fr2 ) ),
+        	( min (fst sr1 ) (fst sr2 ) , min (snd sr1 ) (snd sr2 ) )
+        	 )
+		| Union(r3,r4), Rect(fr1, sr1) -> Union ( boundInt r3 r2, boundInt r4 r2)
+		| _,_ -> failwith "not expected"
+;;
+
+
+
 let rec boundP s =
 	match s with
 		Rect (_, _) -> s
 		| Circle (c, r) -> Rect ((fst c-.r, snd c-.r), (fst c+.r,snd c+.r))
     | Union (l,r) -> rectSum (boundP l) (boundP r)
-    | Intersection (l,r) -> rectAnd (boundP l) (boundP r)
+    | Intersection (l,r) -> boundInt (boundP l) (boundP r)
     | Subtraction (l,r) -> boundaries (boundP l) (boundP r)
 ;;
 
@@ -595,7 +610,6 @@ emptyIntersection (Rect((1.0, 0.0 ), (3.0, 2.0))) (Circle ((6.0, 6.0), 1.0));;
 emptyIntersection (Rect((1.0, 0.0 ), (3.0, 2.0))) (Rect((2.0, 0.0 ), (6.0, 2.0)));;
 emptyIntersection (Circle ((2.0,2.0), 1.0)) (Circle ((4.0, 2.0), 1.0));;
 emptyIntersection (Rect((1.0, 0.0 ), (2.0, 3.0))) (Rect((2.0, 0.0 ), (3.0, 3.0)));;
-emptyIntersection rect1 rect2;;
 emptyIntersection (Union(Circle((2.,3.), 1.),Circle((6.,3.), 1.))) (Circle((4.,4.), 2.));;
 
 (* Test empty intersection: (Very Basic) *)
@@ -626,7 +640,7 @@ let rec partition s =
 	| Subtraction(s1,s2) -> if (emptyIntersection s1 s2) 
 			then partition s1 
 		else (	
-			let a = boundP s in
+			let a = boundP s in 
 				match s1,s2, a with 
 					Union (l,r),_ ,_ -> subtr l r s2 s
 					| _, Union (l,r),_ -> subtr l r s1 s
