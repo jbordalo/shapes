@@ -54,17 +54,14 @@ let rectTwo = Rect ((2.0, 2.0), (7.0, 7.0));;
 let shapeOverlapUnion = Union (rectOne, rectTwo);;
 let shapeIntersection = Intersection (rectOne, rectTwo);;
 
-(* Module List for reference *)
-(* http://caml.inria.fr/pub/docs/manual-ocaml/libref/List.html *)
-
 (* FUNCTION hasRect *)
 
 let rec hasRect s =
     match s with
-		Rect (p,q) -> true
-        | Circle (p,f) -> false
-        | Union (l,r) -> hasRect l || hasRect r
-        | Intersection (l,r) -> hasRect l || hasRect r
+		Rect (_,_) -> true
+        | Circle (_,_) -> false
+        | Union (l,r)
+        | Intersection (l,r)
         | Subtraction (l,r) -> hasRect l || hasRect r
 ;;
 
@@ -73,14 +70,20 @@ let rec hasRect s =
 
 let rec countBasic s =
     match s with
-		Rect (p,q) -> 1
-        | Circle (p,f) -> 1
-        | Union (l,r) -> countBasic l + countBasic r
-        | Intersection (l,r) -> countBasic l + countBasic r
+		Rect (_,_)
+        | Circle (_,_) -> 1
+        | Union (l,r)
+        | Intersection (l,r)
         | Subtraction (l,r) -> countBasic l + countBasic r
 ;;
 
 (* countBasic shape1 *)
+(* countBasic  (Intersection(Rect((5., -110.0),(15., 110.0)),
+Union(Subtraction(Circle((10.0, 10.0), 100.0), Circle((10.0, 10.0), 90.0)),
+Union(Subtraction(Circle((10.0, 10.0), 80.0), Circle((10.0, 10.0), 70.0)),
+Union(Subtraction(Circle((10.0, 10.0), 60.0), Circle((10.0, 10.0), 60.0)),
+Union(Subtraction(Circle((10.0, 10.0), 40.0), Circle((10.0, 10.0), 30.0)),
+Subtraction(Circle((10.0, 10.0), 20.0), Circle((10.0, 10.0), 10.0))))))));; *)
 
 (* FUNCTION belongs *)
 
@@ -88,7 +91,6 @@ let rec countBasic s =
 let dist p1 p2 =
 	sqrt ( (fst p1 -. fst p2)**2. +. (snd p1 -. snd p2)**2. )
 
-(* TODO Is it including all borders? *)
 let rec belongs p s =
     match s with
 		(* Inclusive inequality due to border belonging to closed shape *)
@@ -113,8 +115,8 @@ let rec belongs p s =
 (* let circle = Circle ((0., 0.),(5.));; *)
 (* belongs (0., 4.) circle *)
 (* belongs (0., 9.) circle *)
-belongs (0.0, 0.0) shape3;;
-belongs (10.0, 10.0) shape3;;
+(* belongs (0.0, 0.0) shape3;; *)
+(* belongs (10.0, 10.0) shape3;; *)
 
 (* val shapeIntersection : shape =
   Intersection (Rect ((0., 0.), (5., 4.)), Rect ((2., 2.), (7., 7.))) *)
@@ -130,26 +132,25 @@ belongs (10.0, 10.0) shape3;;
 
 (* FUNCTION density *)
 
-(*
-In a basic shape, the density is one if p belongs to the shape; zero outside
-In a union, the two partial densities are added up if p is in the intersection zone; outside that common area the density remains.
-In an intersection, the two partial densities are added up if p is in the intersection zone; but the density is zero if p is outside the intersection zone.
-In a difference, the density remains if p is in the part of the shape that remains; the density is zero if p is in the part that represents erasure.
-*)
 (* TODO Subtraction off the top of my head, may be wrong *)
 let rec density p s =
-    match s with
-      	Rect (_, _) -> if belongs p s then 1 else 0
-		| Circle (_, _) -> if belongs p s then 1 else 0
-        | Union (l,r) -> density p l + density p r
-        | Intersection (l,r) -> if belongs p s 
-				then density p l + density p r else 0
-        | Subtraction (l,r) -> if belongs p s then density p l else 0
+    if belongs p s then
+	match s with
+      	Rect (_, _)
+		| Circle (_, _) -> 1
+        | Union (l,r)
+        | Intersection (l,r) -> density p l + density p r
+        | Subtraction (l,r) -> density p l
+	else 0
 ;;
 
 (* let s = Subtraction(Intersection(Circle((40.,40.),60.), Rect((20.,20.),(80.,90.))), Circle((50.,40.),10.));; *)
 
-output_string stdout (svg s)
+(* output_string stdout (svg s) *)
+
+(* density (51.,41.) s = 0 *)
+(* density (39.,39.) s = 2 *)
+
 (* Inside rectOne but not rectTwo = 1 *)
 (* density (2., 1.) shapeOverlapUnion *)
 (* Inside rectTwo but not rectOne = 1 *)
@@ -168,19 +169,32 @@ output_string stdout (svg s)
 (* Outside both = 0 *)
 (* density (0., 15.) shapeIntersection *)
 
+(* density (20.,20.) (Subtraction(Circle((20.,20.), 20.), Circle((20.,20.), 10.))) *)
+(* density (30.,30.) (Subtraction(Circle((20.,20.), 20.), Circle((20.,20.), 10.))) *)
+(* density (500.,500.) (Subtraction(Circle((20.,20.), 20.), Circle((20.,20.), 10.))) *)
+
 (* FUNCTION which *)
 
-(* TODO Not sure about a lot of shit*)
 let rec which p s =
   	if belongs p s then
 			match s with
-    		Rect(_,_) -> [s]
+    			Rect(_,_)
 				| Circle(_,_) -> [s]
-				| Union(l,r) -> which p l @ which p r
-				| Intersection(l,r) -> which p l @ which p r
+				| Union(l,r)
+				| Intersection(l,r)
 				| Subtraction (l,r)-> which p l @ which p r
 	else []
 ;;
+
+(* Testing for union *)
+(* On first rectangle *)
+(* which (1.,1.) shapeOverlapUnion;; *)
+(* On second rectangle *)
+(* which (6.,4.) shapeOverlapUnion;; *)
+(* On both rectangles (intersection) *)
+(* which (4., 3.) shapeOverlapUnion;; *)
+(* On none *)
+(* which (6.,1.) shapeOverlapUnion;; *)
 
 (* Inside rectOne but not rectTwo = [rectOne] *)
 (* which (2., 1.) shapeOverlapUnion *)
@@ -200,9 +214,9 @@ let rec which p s =
 (* Outside both = 0 *)
 (* which (0., 15.) shapeIntersection *)
 
-(* On the subtracted area = 0*)
+(* On the subtracted area = 0 *)
 (* which (3.0,3.0) shapeSubtract *)
-(* On the limit of the subtracted area = 0*)
+(* On the limit of the subtracted area = 0 *)
 (* which (4.0,2.0) shapeSubtract *)
 (* Inside the shape = [rect2] *)
 (* which (4.0, 3.0) shapeSubtract *)
@@ -232,13 +246,13 @@ let rectAnd r1 r2 = (* pre: r1 and r2 are both Rect *)
 (* rectSum (Rect ((0.,0.),(3.,3.))) (Rect((3.,2.),(6.,5.)));; *)
 (* rectAnd (Rect ((0.,0.),(2.,2.))) (Rect((1.,1.),(4.,4.)));; *)
 
-(* TODO CHANGE TO ENUNCIADO'S REQUIREMENTS *)
+(* Minimum bounding box for the subshapes of the shape be them white or black *)
 let rec minBound s =
 	match s with
 		Rect (_, _) -> s
 		| Circle (c, r) -> Rect ((fst c-.r, snd c-.r), (fst c+.r,snd c+.r))
-        | Union (l,r) -> rectSum (minBound l) (minBound r)
-        | Intersection (l,r) -> rectSum (minBound l) (minBound r)
+        | Union (l,r)
+        | Intersection (l,r)
         | Subtraction (l,r) -> rectSum (minBound l) (minBound r)
 ;;
 
@@ -330,6 +344,7 @@ let rec grid m n a b =
 			then col m n a b
 		else Union(row m n a b, grid m (n-1) a b)
 ;;
+
 (* TEST : grid 6 6 1.0 1.0;; *)
 (* Union
  (Union (Rect ((4., 5.), (5., 6.)),
@@ -356,31 +371,34 @@ let rec grid m n a b =
 
 
 (* Makes a list out of a shape *)
-let rec createList s =
+let rec createListFromShape s =
 	match s with
 	Rect(_,_) 
 	| Circle(_,_) -> [s]
 	| Union (s1, s2)
 	| Intersection (s1, s2)
-	| Subtraction (s1, s2) -> createList s1 @ createList s2
+	| Subtraction (s1, s2) -> createListFromShape s1 @ createListFromShape s2
 ;;
 
 (* Counts how many times the element s appears on the list l *)
 let rec countAppearances s l =
 	match l with
         [] -> 0
-    	| x::xs -> if s = x then 1 + countAppearances s xs else countAppearances s xs
+    	| x::xs -> if s = x 
+						then 1 + countAppearances s xs
+					else countAppearances s xs
 ;;
 
-(* Counts each elements appearance and filters it out *)
-let rec aux l = 
+(* Counts each element's appearance and filters it out *)
+let rec countAppearancesFilter l = 
 	match l with
 	[] -> 0
 	| x::xs ->
 		let a = countAppearances x l in
-			if a = 1 then aux (List.filter (fun i -> i <> x) xs)
+			if a = 1 
+				then countAppearancesFilter (List.filter (fun i -> i <> x) xs)
 			else
-				a + aux (List.filter (fun i -> i <> x) xs)
+				a + countAppearancesFilter (List.filter (fun i -> i <> x) xs)
 ;;
 
 (* aux [1;1;2;3;3;3;3];; *)
@@ -390,14 +408,14 @@ let rec aux l =
 
 let countBasicRepetitions s =
 	match s with
-	Rect(_,_) -> 0
+	Rect(_,_)
 	| Circle(_,_) -> 0
 	| Union (s1, s2)
 	| Intersection (s1, s2)
 	| Subtraction (s1, s2) -> 
 		if s1 = s2 then 2
 		else
-			aux (createList s)
+			countAppearancesFilter (createListFromShape s)
 ;;
 
 
@@ -415,15 +433,20 @@ let countBasicRepetitions s =
 
 (* FUNCTION svg *)
 
+(* Absolute value for floats *)
+let absFloat x = 
+	if x < 0. then (~-. x) else x
+;;
+
 let width r = (* @pre: r is Rect(_,_) *)
 	match r with
-		Rect(l, r) -> fst r -. fst  l
+		Rect(l, r) -> absFloat (fst r -. fst l)
 		| _ -> failwith "r not Rect"
 ;;
 
 let height r = (* @pre: r is Rect(_,_) *)
 	match r with
-		Rect(l, r) -> snd r -. snd l
+		Rect(l, r) -> absFloat (snd r -. snd l)
 		| _ -> failwith "r not Rect"
 ;;
 
@@ -435,35 +458,35 @@ let genID =
 ;;
 
 let mask s id = 
-    "\n<mask id=\""^id^"\">\n"^s^"</mask>\n"
+    "\n\t<mask id=\""^id^"\">\n"^s^"\t</mask>\n"
 ;;
 
 let rec maskAux s id = 
 	match s with
     	Rect (lt, rb) -> 
-    		"<rect x=\"" ^ string_of_float (fst lt) 
+    		"\t<rect x=\"" ^ string_of_float (fst lt) 
     		^ "\" y=\"" ^ string_of_float (snd lt) ^
     		 "\" width=\"" ^ string_of_float (width s) ^
     		 "\" height=\"" ^ string_of_float (height s) ^
     		 "\" mask=\"url(#" ^ id ^ ")\"/>\n"
 		| Circle (c, r) -> 
-			"<circle cx=\"" ^ string_of_float ( fst c ) ^
+			"\t<circle cx=\"" ^ string_of_float ( fst c ) ^
 			 "\" cy=\"" ^ string_of_float ( snd c ) ^
 			 "\" r=\"" ^ string_of_float r ^
 			 "\" mask=\"url(#"^ id ^")\" />\n"
         | Union (l,r) -> maskAux l id ^ maskAux r id
-        | Intersection (l,r) -> failwith "inter inside sub"
-        | Subtraction (l,r) -> failwith "sub inside sub"
+        | Intersection (l,r)
+        | Subtraction (l,r) -> failwith "Handled outside this function"
 ;;
 
 let rec auxSvg s color =
 	match s with
-		Rect (lt, rb) -> "<rect x=\"" ^ string_of_float (fst lt) ^
+		Rect (lt, rb) -> "\t<rect x=\"" ^ string_of_float (fst lt) ^
 		 "\" y=\"" ^ string_of_float (snd lt) ^
 		 "\" width=\"" ^ string_of_float (width s) ^
 		 "\" height=\"" ^ string_of_float (height s) ^
 		 "\" fill=\"" ^ color ^ "\"/>\n"
-		| Circle (c, r) -> "<circle cx=\"" ^ string_of_float (fst c) ^
+		| Circle (c, r) -> "\t<circle cx=\"" ^ string_of_float (fst c) ^
 		 "\" cy=\"" ^ string_of_float ( snd c ) ^
 		 "\" r=\"" ^ string_of_float r ^
 		 "\" fill=\""^ color ^"\" />\n"
@@ -476,7 +499,8 @@ let rec auxSvg s color =
 			maskAux a id ^ mask ((auxSvg a "white" ) ^
 			 (auxSvg (Union(b, c)) "black")) id
 		| Subtraction (Intersection(li, ri),r) ->
-			(* Comment this to explain, it's insane gotta work the math on paper *)
+			(* These expressions are mathematically equivalent *)
+			(* through simple rules of set theory *)
 			let ss = Subtraction(li, Union(Subtraction(li,ri), r)) in
 			auxSvg ss color
 		| Subtraction (l,r) ->
@@ -484,114 +508,94 @@ let rec auxSvg s color =
 			maskAux l id ^ mask ((auxSvg l "white" ) ^ (auxSvg r "black")) id
 ;;
 
-(* minBound is giving bad results for svg size. Gotta be minimum bounds plus the x for leftmost figure *)
-
 let topleftmost r = (* r is a Rect *)
 	match r with
 	Rect(x,y) -> fst x
 	| _ -> failwith "r is not a Rect"
 ;;
 
-let bottomrightmost r = (* r is a Rect *)
+let bottomrightmost r = (* r is a Rect *)	
 	match r with
 	Rect(x,y) -> snd y
 	| _ -> failwith "r is not a Rect"
 ;;
 
+(* Didn't remove the x. from output since HTML accepts it *)
 let svg s =
 	let minimum = minBoundSvg s in
-    		"<html>\n<body>\n<svg width=\"" ^ 
+    		"<html>\n<body>\n\t<svg width=\"" ^ 
 				string_of_float (topleftmost minimum +. width minimum) ^
     		 "\" height=\"" ^
 				string_of_float (bottomrightmost minimum +. height minimum) ^
 			 "\">\n" 
-    		^ auxSvg s "black" ^ "</svg>\n</body>\n</html>"
+    		^ auxSvg s "black" ^ "\t</svg>\n</body>\n</html>"
 ;;
 
-
-output_string stdout (svg (Rect((100.,100.),(300.,300.))));;
-output_string stdout (svg (Circle((100.,100.),300.)));;
-output_string stdout (svg (Union(Rect((100.,100.),(300.,300.)),Circle((50.,50.),150.))));;
-output_string stdout (svg (Subtraction(Rect((100.,90.),(300.,520.)),Circle((50.,50.),150.))));;
-output_string stdout (svg (Subtraction(Rect((100.,90.),(300.,520.)), Union(Rect((50., 60.),(36.,40.)) ,Rect((50.,50.),(150., 150.))))));;
-output_string stdout (svg (grid 8 8 100. 100.));;
-output_string stdout (svg (Union((grid 8 8 100. 100.), Subtraction(Circle((400.,400.), 200.), Rect((290.,290.),(510.,510.))))));;
+(* output_string stdout (svg (Rect((100.,100.),(300.,300.))));; *)
+(* output_string stdout (svg (Circle((100.,100.),300.)));; *)
+(* output_string stdout (svg (Union(Rect((100.,100.),(300.,300.)),Circle((50.,50.),150.))));; *)
+(* output_string stdout (svg (Subtraction(Rect((100.,90.),(300.,520.)),Circle((50.,50.),150.))));; *)
+(* output_string stdout (svg (Subtraction(Rect((100.,90.),(300.,520.)), Union(Rect((50., 60.),(36.,40.)) ,Rect((50.,50.),(150., 150.))))));; *)
+(* output_string stdout (svg (grid 8 8 100. 100.));; *)
+(* output_string stdout (svg (Union((grid 8 8 100. 100.), Subtraction(Circle((400.,400.), 200.), Rect((290.,290.),(510.,510.))))));; *)
 (* Border problem between here *)
-output_string stdout (svg (Intersection(Rect((40.,40.),(500.,500.)), Circle((50.,50.), 500.))));;
-output_string stdout (svg (Intersection(Circle((50.,50.), 500.), Rect((40.,40.),(500.,500.)))));;
+(* output_string stdout (svg (Intersection(Rect((40.,40.),(500.,500.)), Circle((50.,50.), 500.))));; *)
+(* output_string stdout (svg (Intersection(Circle((50.,50.), 500.), Rect((40.,40.),(500.,500.)))));; *)
 (* Border problem between here *)
-output_string stdout (svg (Subtraction(Rect((100.,90.),(300.,520.)),Circle((50.,50.),150.))));;
-output_string stdout (svg (Subtraction(Circle((50.,50.),150.), Rect((100.,90.),(300.,520.)))));;
+(* output_string stdout (svg (Subtraction(Rect((100.,90.),(300.,520.)),Circle((50.,50.),150.))));; *)
+(* output_string stdout (svg (Subtraction(Circle((50.,50.),150.), Rect((100.,90.),(300.,520.)))));; *)
 
 (* Dreamworks kid *)
-output_string stdout (svg (Subtraction(Circle((50.,50.),50.), Subtraction(Circle((40.,40.),40.),Rect((70.,10.),(90.,30.))))));;
+(* output_string stdout (svg (Subtraction(Circle((50.,50.),50.), Subtraction(Circle((40.,40.),40.),Rect((70.,10.),(90.,30.))))));; *)
 
 (* Moon *)
-output_string stdout (svg (Subtraction(Subtraction(Circle((40.,40.),40.),Rect((70.,10.),(90.,30.))), Circle((50.,50.), 50.))));;
+(* output_string stdout (svg (Subtraction(Subtraction(Circle((40.,40.),40.),Rect((70.,10.),(90.,30.))), Circle((50.,50.), 50.))));; *)
 
 (* Donut *)
-output_string stdout (svg (Subtraction(Circle((80.,80.), 60.), Circle((80.,80.), 20.))));;
-output_string stdout (svg (Subtraction(Circle((80.,80.), 60.), Rect((115.,20.), (160.,80.)))));;
-output_string stdout (svg (Subtraction(Subtraction(Circle((80.,80.), 60.),Circle((80.,80.),20.)), Rect((115.,20.), (160., 80.)))));;
+(* output_string stdout (svg (Subtraction(Circle((80.,80.), 60.), Circle((80.,80.), 20.))));; *)
+(* output_string stdout (svg (Subtraction(Circle((80.,80.), 60.), Rect((115.,20.), (160.,80.)))));; *)
+(* output_string stdout (svg (Subtraction(Subtraction(Circle((80.,80.), 60.),Circle((80.,80.),20.)), Rect((115.,20.), (160., 80.)))));; *)
 
-output_string stdout (svg (Intersection(Rect((100.,200.),(600.,600.)), Rect((400.,100.),(900.,400.)))));;
-output_string stdout 
-(svg (Subtraction(Intersection(Rect((100.,200.),(600.,600.)), Rect((400.,100.),(900.,400.))), Circle((600.,300.), 100.))));;
+(* output_string stdout (svg (Intersection(Rect((100.,200.),(600.,600.)), Rect((400.,100.),(900.,400.)))));; *)
+(* output_string stdout 
+(svg (Subtraction(Intersection(Rect((100.,200.),(600.,600.)), Rect((400.,100.),(900.,400.))), Circle((600.,300.), 100.))));; *)
 
 (* Two lobed afro *)
-output_string stdout (svg (Subtraction(Union(Circle((200.,200.),100.),Circle((300.,200.),100.)),Rect((200.,200.),(300.,400.)))));;
+(* output_string stdout (svg (Subtraction(Union(Circle((200.,200.),100.),Circle((300.,200.),100.)),Rect((200.,200.),(300.,400.)))));; *)
 
 (* A-B such that AnB is empty *)
-output_string stdout (svg (Subtraction(Rect((10.,10.),(40.,40.)), Rect((50.,10.),(70.,30.)))));;
-output_string stdout (svg (Subtraction(Rect((10.,10.),(40.,40.)), Circle((60.,50.),10.))));;
-output_string stdout (svg (Subtraction(Rect((10.,10.),(40.,40.)), Union(Rect((50.,10.),(70.,30.)), Circle((60.,50.),10.)))));;
+(* output_string stdout (svg (Subtraction(Rect((10.,10.),(40.,40.)), Rect((50.,10.),(70.,30.)))));; *)
+(* output_string stdout (svg (Subtraction(Rect((10.,10.),(40.,40.)), Circle((60.,50.),10.))));; *)
+(* output_string stdout (svg (Subtraction(Rect((10.,10.),(40.,40.)), Union(Rect((50.,10.),(70.,30.)), Circle((60.,50.),10.)))));; *)
 
-let intr = Intersection(Circle((300.,200.), 100.), Circle((400.,200.),100.));;
+(* let intr = Intersection(Circle((300.,200.), 100.), Circle((400.,200.),100.));; *)
 (* Has a border *)
-output_string stdout(svg intr);;
-output_string stdout(svg (Intersection(Circle((400.,200.), 100.), Circle((300.,200.),100.))));;
+(* output_string stdout(svg intr);; *)
+(* output_string stdout(svg (Intersection(Circle((400.,200.), 100.), Circle((300.,200.),100.))));; *)
 
 (* Works but solving border issues *)
-output_string stdout (svg (Subtraction(Rect((200.,100.),(500.,300.)), intr)));;
+(* output_string stdout (svg (Subtraction(Rect((200.,100.),(500.,300.)), intr)));; *)
 
 (* *)
-output_string stdout (svg (Union(Circle((500.,500.), 100.), (Subtraction(Circle((500.,500.), 50.),Circle((500.,500.), 100.))))));;
+(* output_string stdout (svg (Union(Circle((500.,500.), 100.), (Subtraction(Circle((500.,500.), 50.),Circle((500.,500.), 100.))))));; *)
 
-output_string stdout (svg (Intersection(Rect((5., -110.0),(15., 110.0)),
+(* output_string stdout (svg (Intersection(Rect((5., -110.0),(15., 110.0)),
 Union(Subtraction(Circle((10.0, 10.0), 100.0), Circle((10.0, 10.0), 90.0)),
 Union(Subtraction(Circle((10.0, 10.0), 80.0), Circle((10.0, 10.0), 70.0)),
 Union(Subtraction(Circle((10.0, 10.0), 60.0), Circle((10.0, 10.0), 60.0)),
 Union(Subtraction(Circle((10.0, 10.0), 40.0), Circle((10.0, 10.0), 30.0)),
-Subtraction(Circle((10.0, 10.0), 20.0), Circle((10.0, 10.0), 10.0)))))))));;
+Subtraction(Circle((10.0, 10.0), 20.0), Circle((10.0, 10.0), 10.0)))))))));; *)
 
-density (220.,220.) (Subtraction(Union(Circle((200.,200.),100.),Circle((300.,200.),100.)),Rect((200.,200.),(300.,400.))));;
-which (220.,220.) (Subtraction(Union(Circle((200.,200.),100.),Circle((300.,200.),100.)),Rect((200.,200.),(300.,400.))));;
+(* density (220.,220.) (Subtraction(Union(Circle((200.,200.),100.),Circle((300.,200.),100.)),Rect((200.,200.),(300.,400.))));; *)
+(* which (220.,220.) (Subtraction(Union(Circle((200.,200.),100.),Circle((300.,200.),100.)),Rect((200.,200.),(300.,400.))));; *)
 
-density (190.,190.) (Subtraction(Union(Circle((200.,200.),100.),Circle((300.,200.),100.)),Rect((200.,200.),(300.,400.))));;
-which (190.,190.) (Subtraction(Union(Circle((200.,200.),100.),Circle((300.,200.),100.)),Rect((200.,200.),(300.,400.))));;
+(* density (190.,190.) (Subtraction(Union(Circle((200.,200.),100.),Circle((300.,200.),100.)),Rect((200.,200.),(300.,400.))));; *)
+(* which (190.,190.) (Subtraction(Union(Circle((200.,200.),100.),Circle((300.,200.),100.)),Rect((200.,200.),(300.,400.))));; *)
 
-density (250.,190.) (Subtraction(Union(Circle((200.,200.),100.),Circle((300.,200.),100.)),Rect((200.,200.),(300.,400.))));;
-which (250.,190.) (Subtraction(Union(Circle((200.,200.),100.),Circle((300.,200.),100.)),Rect((200.,200.),(300.,400.))));;
+(* density (250.,190.) (Subtraction(Union(Circle((200.,200.),100.),Circle((300.,200.),100.)),Rect((200.,200.),(300.,400.))));; *)
+(* which (250.,190.) (Subtraction(Union(Circle((200.,200.),100.),Circle((300.,200.),100.)),Rect((200.,200.),(300.,400.))));; *)
 
 (* FUNCTION partition *)
-
-(*let boundaries r1 r2 =
-	match r1, r2 with
-		Rect((x, y), (f,g)), Rect((z, w), (l,p)) ->
-			let a = z>x && l<f in
-				let b =  w>z && p<g in
-					if a then (
-						if b then r1
-						else 
-							Union(Rect((x,y),(z,g)),Rect((l, y),(f,g)))
-						)
-					else (
-						if b then
-							Union(Rect((x,y),(f, w)), Rect((x, p),(f,g))) 
-						else
-							r1	
-							)
-;;*)
 
 let boundaries r1 r2 = (* pre: r1 and r2 are rects *)
 	match r1, r2 with
@@ -650,17 +654,17 @@ let rec boundP s =
 
 (* Tests : *)
 (* 1. Expected : Union(Rect ((2., 2.), (4., 4.)), Rect ((5., 2.), (7., 4.)))*)
-boundaries (Rect((2.,2.),(7.,4.))) (Rect((4.,1.), (5.,5.)) );;
+(* boundaries (Rect((2.,2.),(7.,4.))) (Rect((4.,1.), (5.,5.)) );; *)
 (* 2. Expected : Union (Rect ((2., 1.), (4., 2.)), Rect ((2., 4.), (4., 5.)))*)
-boundaries (  Rect((2.,1.),(4.,5.)) ) ( Rect((1.,2.),(5.,4.)) );;
+(* boundaries (  Rect((2.,1.),(4.,5.)) ) ( Rect((1.,2.),(5.,4.)) );; *)
 (* 3. Expected : Rect ((3., 4.), (6., 6.)) *)
-boundaries (Rect((3.,3.), (6.,6.)) ) (Rect((2.,2.),(7.,4.)));;
+(* boundaries (Rect((3.,3.), (6.,6.)) ) (Rect((2.,2.),(7.,4.)));; *)
 (* 4. Expected : Rect ((2., 6.), (4., 8.)) *)
-boundaries (  Rect((2.,6.),(4.,9.)) ) ( Rect((1.,8.),(5.,10.)) );;
+(* boundaries (  Rect((2.,6.),(4.,9.)) ) ( Rect((1.,8.),(5.,10.)) );; *)
 (* 5. Expected : Rect ((3., 2.), (7., 4.)) *)
-boundaries (Rect((2.,2.),(7.,4.))) (Rect((1.,1.), (3.,5.)) );;
+(* boundaries (Rect((2.,2.),(7.,4.))) (Rect((1.,1.), (3.,5.)) );; *)
 (* 6. Expected : Rect ((1., 12.), (3., 14.)) *)
-boundaries (  Rect((1.,12.),(4.,14.)) ) ( Rect((3.,11.),(5.,15.)) );;
+(* boundaries (  Rect((1.,12.),(4.,14.)) ) ( Rect((3.,11.),(5.,15.)) );; *)
 
 let rec emptyIntersection s1 s2 = 
 	match (boundP (Intersection(s1, s2))) with
@@ -678,22 +682,22 @@ and auxl p s s0 =
 	| _ -> (not (belongs p s))
 ;;
 
-emptyIntersection (Union(Circle((2.,2.), 1.),Circle((5.,2.), 1.))) (Union( Circle((2.,4.), 2.),Circle((5.,4.),2.)));;
-boundP (Intersection(Union(Circle((2.,2.), 1.),Circle((5.,2.), 1.)), Union( Circle((2.,4.), 2.),Circle((5.,4.),2.))));;
+(* emptyIntersection (Union(Circle((2.,2.), 1.),Circle((5.,2.), 1.))) (Union( Circle((2.,4.), 2.),Circle((5.,4.),2.)));; *)
+(* boundP (Intersection(Union(Circle((2.,2.), 1.),Circle((5.,2.), 1.)), Union( Circle((2.,4.), 2.),Circle((5.,4.),2.))));; *)
 
-emptyIntersection (Circle((2.,2.), 1.)) (Union( Circle((2.,4.), 2.),Circle((5.,4.),2.)));; 
-emptyIntersection (Circle((5.,2.), 1.)) (Union( Circle((2.,4.), 2.),Circle((5.,4.),2.)));;
+(* emptyIntersection (Circle((2.,2.), 1.)) (Union( Circle((2.,4.), 2.),Circle((5.,4.),2.)));; *) 
+(* emptyIntersection (Circle((5.,2.), 1.)) (Union( Circle((2.,4.), 2.),Circle((5.,4.),2.)));; *)
 
-boundP ( Intersection(Union(Circle((2.,3.), 1.),Circle((6.,3.), 1.)), Union(Circle((4.,4.), 2.), Rect((2.,5.),(6.,6.)))));;
-emptyIntersection (Union(Circle((2.,3.), 1.),Circle((6.,3.), 1.))) (Union(Circle((4.,4.), 2.), Rect((2.,5.),(6.,6.))));;
+(* boundP ( Intersection(Union(Circle((2.,3.), 1.),Circle((6.,3.), 1.)), Union(Circle((4.,4.), 2.), Rect((2.,5.),(6.,6.)))));; *)
+(* emptyIntersection (Union(Circle((2.,3.), 1.),Circle((6.,3.), 1.))) (Union(Circle((4.,4.), 2.), Rect((2.,5.),(6.,6.))));; *)
 
-emptyIntersection(Circle((2.,3.), 1.)) (Circle((4.,4.), 2.));;
-emptyIntersection(Circle((6.,3.), 1.)) (Circle((4.,4.), 2.));;
-emptyIntersection (Rect((1.0, 0.0 ), (3.0, 2.0))) (Circle ((6.0, 6.0), 1.0));;
-emptyIntersection (Rect((1.0, 0.0 ), (3.0, 2.0))) (Rect((2.0, 0.0 ), (6.0, 2.0)));;
-emptyIntersection (Circle ((2.0,2.0), 1.0)) (Circle ((4.0, 2.0), 1.0));;
-emptyIntersection (Rect((1.0, 0.0 ), (2.0, 3.0))) (Rect((2.0, 0.0 ), (3.0, 3.0)));;
-emptyIntersection (Union(Circle((2.,3.), 1.),Circle((6.,3.), 1.))) (Circle((4.,4.), 2.));;
+(* emptyIntersection(Circle((2.,3.), 1.)) (Circle((4.,4.), 2.));; *)
+(* emptyIntersection(Circle((6.,3.), 1.)) (Circle((4.,4.), 2.));; *)
+(* emptyIntersection (Rect((1.0, 0.0 ), (3.0, 2.0))) (Circle ((6.0, 6.0), 1.0));; *)
+(* emptyIntersection (Rect((1.0, 0.0 ), (3.0, 2.0))) (Rect((2.0, 0.0 ), (6.0, 2.0)));; *)
+(* emptyIntersection (Circle ((2.0,2.0), 1.0)) (Circle ((4.0, 2.0), 1.0));; *)
+(* emptyIntersection (Rect((1.0, 0.0 ), (2.0, 3.0))) (Rect((2.0, 0.0 ), (3.0, 3.0)));; *)
+(* emptyIntersection (Union(Circle((2.,3.), 1.),Circle((6.,3.), 1.))) (Circle((4.,4.), 2.));; *)
 
 (* Test empty intersection: (Very Basic) *)
 (* True *)
@@ -707,7 +711,7 @@ emptyIntersection (Union(Circle((2.,3.), 1.),Circle((6.,3.), 1.))) (Circle((4.,4
 (* TODO: Intersection/Subtraction with Unions *)
 let rec partition s =
 	match s with 
-	Rect(_,_) -> [s]
+	Rect(_,_)
 	|Circle (_,_) -> [s]
 	| Union(s1,s2) -> if (emptyIntersection s1 s2) then 
 							partition s1 @ partition s2 else [s]
@@ -728,65 +732,64 @@ let rec partition s =
 					Union (l,r),_ ,_ -> subtr l r s2 s
 					| _, Union (l,r),_ -> subtr l r s1 s
 					| _,_ ,Union(l, r) -> 
-										[Subtraction(l,s2); Subtraction(r,s2)]
+									[Subtraction(l,s2); Subtraction(r,s2)]
 					| _,_,_ -> [s]
 		)		
 and subaux s2 s3 = 
 	 if (emptyIntersection s3 s2)
-				 then [s3] else partition (Subtraction (s3, s2)) 
+			then [s3] else partition (Subtraction (s3, s2)) 
 and intaux s2 s3 = 
 	if (emptyIntersection s3 s2)
-				 then [s3] else partition (Intersection (s3, s2)) 
+			then [s3] else partition (Intersection (s3, s2)) 
 and inter l r s1 s =
 	if (emptyIntersection l r) 
-							then (intaux s1 l) @ (intaux s1 r)
-						else [s]
+			then (intaux s1 l) @ (intaux s1 r)
+	else [s]
 and subtr l r s1 s = 
 	if (emptyIntersection l r) 
-						then (subaux s1 l) @ (subaux s1 r)
-				else [s]
+			then (subaux s1 l) @ (subaux s1 r)
+	else [s]
 	;;
 
-(*Tests:*)
-(*list = [Circle ((4., 4.), 2.)] *)
-partition (Circle((4.,4.), 2.));;
-(*list = [Rect ((3.3, 3.), (6., 5.))] *)
-partition (Rect ((3.3,3.),(6.,5.)));;
-(*list = [Union (Rect ((0., 0.), (5., 2.)), Rect ((2., 2.), (7., 7.)))] *)
-partition (Union(rect1, rect2));;
-(*list =[Subtraction (Circle ((2., 2.), 1.)  Union (Circle ((2., 4.), 2.), Circle ((5., 4.), 2.)));
- Subtraction (Circle ((5., 2.), 1.),  Union (Circle ((2., 4.), 2.), Circle ((5., 4.), 2.)))]*)
-partition (Subtraction(Union(Circle((2.,2.), 1.),Circle((5.,2.), 1.)), Union( Circle((2.,4.), 2.),Circle((5.,4.),2.))));;
-(*list = [Subtraction (Rect ((2., 2.), (4., 4.)), Rect ((4., 1.), (5., 5.)));
+(* Tests: *)
+(* list = [Circle ((4., 4.), 2.)] *)
+(* partition (Circle((4.,4.), 2.));; *)
+(* list = [Rect ((3.3, 3.), (6., 5.))] *)
+(* partition (Rect ((3.3,3.),(6.,5.)));; *)
+(* list = [Union (Rect ((0., 0.), (5., 2.)), Rect ((2., 2.), (7., 7.)))] *)
+(* partition (Union(rect1, rect2));; *)
+(* list =[Subtraction (Circle ((2., 2.), 1.)  Union (Circle ((2., 4.), 2.), Circle ((5., 4.), 2.)));
+ Subtraction (Circle ((5., 2.), 1.),  Union (Circle ((2., 4.), 2.), Circle ((5., 4.), 2.)))] *)
+(* partition (Subtraction(Union(Circle((2.,2.), 1.),Circle((5.,2.), 1.)), Union( Circle((2.,4.), 2.),Circle((5.,4.),2.))));; *)
+(* list = [Subtraction (Rect ((2., 2.), (4., 4.)), Rect ((4., 1.), (5., 5.)));
  Subtraction (Rect ((5., 2.), (7., 4.)), Rect ((4., 1.), (5., 5.)))]*)
-partition (Subtraction( Rect((2.,2.),(7.,4.)) ,Rect((4.,1.), (5.,5.))));;
-(*list = [Subtraction (Rect ((2., 1.), (4., 2.)), Rect ((1., 2.), (5., 4.)));
+(* partition (Subtraction( Rect((2.,2.),(7.,4.)) ,Rect((4.,1.), (5.,5.))));; *)
+(* list = [Subtraction (Rect ((2., 1.), (4., 2.)), Rect ((1., 2.), (5., 4.)));
  Subtraction (Rect ((2., 4.), (4., 5.)), Rect ((1., 2.), (5., 4.)))]*)
-partition (Subtraction(  Rect((2.,1.),(4.,5.)) , Rect((1.,2.),(5.,4.)) ));;
-(*list = [Subtraction (Rect ((3., 4.), (6., 6.)), Rect ((2., 2.), (7., 4.)))] *)
-partition (Subtraction(Rect((3.,3.), (6.,6.)) , Rect((2.,2.),(7.,4.))));;
-(*list = [Subtraction (Rect ((2., 6.), (4., 8.)), Rect ((1., 8.), (5., 10.)))] *)
-partition (Subtraction(  Rect((2.,6.),(4.,9.)) , Rect((1.,8.),(5.,10.)) ));;
-(*list = [Subtraction (Rect ((1., 12.), (3., 14.)), Rect ((3., 11.), (5., 15.)))]*)
-partition (Subtraction(   Rect((1.,12.),(4.,14.)) ,  Rect((3.,11.),(5.,15.)) ));;
+(* partition (Subtraction(  Rect((2.,1.),(4.,5.)) , Rect((1.,2.),(5.,4.)) ));; *)
+(* list = [Subtraction (Rect ((3., 4.), (6., 6.)), Rect ((2., 2.), (7., 4.)))] *)
+(* partition (Subtraction(Rect((3.,3.), (6.,6.)) , Rect((2.,2.),(7.,4.))));; *)
+(* list = [Subtraction (Rect ((2., 6.), (4., 8.)), Rect ((1., 8.), (5., 10.)))] *)
+(* partition (Subtraction(  Rect((2.,6.),(4.,9.)) , Rect((1.,8.),(5.,10.)) ));; *)
+(* list = [Subtraction (Rect ((1., 12.), (3., 14.)), Rect ((3., 11.), (5., 15.)))] *)
+(* partition (Subtraction(   Rect((1.,12.),(4.,14.)) ,  Rect((3.,11.),(5.,15.)) ));; *)
 
 
-(*list = [Intersection (Circle ((2., 3.), 1.), Circle ((4., 4.), 2.));
+(* list = [Intersection (Circle ((2., 3.), 1.), Circle ((4., 4.), 2.));
  Intersection (Circle ((6., 3.), 1.), Circle ((4., 4.), 2.))]  for both vv*)
-partition(Intersection((Circle((4.,4.), 2.)),Union(Circle((2.,3.), 1.),Circle((6.,3.), 1.))));;
-partition(Intersection(Union(Circle((2.,3.), 1.),Circle((6.,3.), 1.)) ,(Circle((4.,4.), 2.))));;
+(* partition(Intersection((Circle((4.,4.), 2.)),Union(Circle((2.,3.), 1.),Circle((6.,3.), 1.))));; *)
+(* partition(Intersection(Union(Circle((2.,3.), 1.),Circle((6.,3.), 1.)) ,(Circle((4.,4.), 2.))));; *)
 
-(*list =[Intersection (Circle ((2., 3.), 1.),  Union (Circle ((4., 4.), 2.), Rect ((2., 5.), (6., 6.))));
+(* list =[Intersection (Circle ((2., 3.), 1.),  Union (Circle ((4., 4.), 2.), Rect ((2., 5.), (6., 6.))));
 Intersection (Circle ((6., 3.), 1.), Union (Circle ((4., 4.), 2.), Rect ((2., 5.), (6., 6.))))]*)
-partition(Intersection(Union(Circle((2.,3.), 1.),Circle((6.,3.), 1.)), Union(Circle((4.,4.), 2.), Rect((2.,5.),(6.,6.)))));;
+(* partition(Intersection(Union(Circle((2.,3.), 1.),Circle((6.,3.), 1.)), Union(Circle((4.,4.), 2.), Rect((2.,5.),(6.,6.)))));; *)
 
-(*list = [Subtraction (Circle ((2., 3.), 1.), Circle ((4., 4.), 2.));
+(* list = [Subtraction (Circle ((2., 3.), 1.), Circle ((4., 4.), 2.));
  Subtraction (Circle ((6., 3.), 1.), Circle ((4., 4.), 2.))]*)
-partition (Subtraction(Union(Circle((2.,3.), 1.),Circle((6.,3.), 1.)), (Circle((4.,4.), 2.))));;
+(* partition (Subtraction(Union(Circle((2.,3.), 1.),Circle((6.,3.), 1.)), (Circle((4.,4.), 2.))));; *)
 
-partition (Subtraction(Union(Circle((200.,200.),100.),Circle((300.,200.),100.)),Rect((200.,200.),(300.,400.))));;
+(* partition (Subtraction(Union(Circle((200.,200.),100.),Circle((300.,200.),100.)),Rect((200.,200.),(300.,400.))));; *)
 
 (* list =[Subtraction (Subtraction (Circle ((80., 80.), 60.), Circle ((80., 80.), 20.)),
  Rect ((115., 20.), (160., 80.)))] *)
-partition (Subtraction(Subtraction(Circle((80.,80.), 60.),Circle((80.,80.),20.)), Rect((115.,20.), (160., 80.))));;
-
+(* partition (Subtraction(Subtraction(Circle((80.,80.), 60.),Circle((80.,80.),20.)), Rect((115.,20.), (160., 80.))));; *)
