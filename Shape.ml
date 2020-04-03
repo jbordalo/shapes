@@ -40,12 +40,12 @@ type shape = Rect of point*point
 
 
 (* EXAMPLES *)
-
-let rect1 = Rect ((0.0, 0.0), (5.0, 2.0));;
-let rect2 = Rect ((2.0, 2.0), (7.0, 7.0));;
-let c1 = Circle((2.0,2.0), 2.0);;
-let shape1 = Union (rect1, rect2);;
-let shapeSubtract = Subtraction(rect2, c1);;
+let rect1 = Rect ((0.0, 0.0), (0.1, 0.1)) ;;
+let rect2 = Rect ((2.0, 2.0), (7.0, 7.0)) ;;
+let circle = Circle ((1.0, 1.0), 0.1) ;;
+let shape1 = Union (rect1, rect2) ;;
+let shape2 = Union (shape1, shape1) ;;
+let shape3 = Union (circle, shape2) ;;
 
 (* MORE EXAMPLES *)
 
@@ -113,6 +113,8 @@ let rec belongs p s =
 (* let circle = Circle ((0., 0.),(5.));; *)
 (* belongs (0., 4.) circle *)
 (* belongs (0., 9.) circle *)
+belongs (0.0, 0.0) shape3;;
+belongs (10.0, 10.0) shape3;;
 
 (* val shapeIntersection : shape =
   Intersection (Rect ((0., 0.), (5., 4.)), Rect ((2., 2.), (7., 7.))) *)
@@ -145,6 +147,9 @@ let rec density p s =
         | Subtraction (l,r) -> if belongs p s then density p l else 0
 ;;
 
+(* let s = Subtraction(Intersection(Circle((40.,40.),60.), Rect((20.,20.),(80.,90.))), Circle((50.,40.),10.));; *)
+
+output_string stdout (svg s)
 (* Inside rectOne but not rectTwo = 1 *)
 (* density (2., 1.) shapeOverlapUnion *)
 (* Inside rectTwo but not rectOne = 1 *)
@@ -349,20 +354,45 @@ let rec grid m n a b =
 
 (* Para testar repeticoes, use a igualdade "=". Por exemplo, se houver dois circulos iguais (com o mesmo centro e raio) e as restantes forma basicas forem unicas, entao o resultado sera 2. *)
 
-let rec countBasicRepetitions s =
+
+let rec createList s =
 	match s with
-	Rect(_,_) -> 0 
-	| Circle(_,_) -> 0
-	| Union (s1, s2) -> count s1 s2
-	| Intersection (s1, s2)-> count s1 s2
-	| Subtraction (s1, s2) -> count s1 s2
-and count s1 s2 =
-	if s1 = s2 
-		then 2 + countBasicRepetitions s1 + countBasicRepetitions s2
-	else countBasicRepetitions s1 + countBasicRepetitions s2
+	Rect(_,_) 
+	| Circle(_,_) -> [s]
+	| Union (s1, s2)
+	| Intersection (s1, s2)
+	| Subtraction (s1, s2) -> createList s1 @ createList s2
 ;;
 
-(* Two repeated in union = 2*)
+let rec countRepeats s l = (* s has to be basic shape *)
+	match l with
+        [] -> 0
+    	| x::xs -> if s = x then 1 + countRepeats s xs else countRepeats s xs
+;;
+
+let rec aux s l = 
+	match s with
+	Rect(_,_)
+	| Circle(_,_) -> countRepeats s l
+	| Union (s1, s2)
+	| Intersection (s1, s2)
+	| Subtraction (s1, s2) -> aux s1 l + aux s2 l
+;;
+
+countRepeats rect1 c;;
+
+let countBasicRepetitions s =
+	match s with
+	Rect(_,_) -> 0
+	| Circle(_,_) -> 0
+	| Union (s1, s2)
+	| Intersection (s1, s2)
+	| Subtraction (s1, s2) -> if s1 = s2 then 2 else aux s1 (createList s1) + aux s2 (createList s2)
+;;
+
+createList (Union(Intersection(Circle((0.0,0.0), 1.0),Circle((0.0,0.0), 1.0)), shape1));;
+
+(* Two repeated in union = 2 *)
 (* countBasicRepetitions (Union(Circle((0.0,0.0), 1.0),Circle((0.0,0.0), 1.0))) *)
 (* Two repeated and more shapes in s= 2*)
 (* countBasicRepetitions (Union(Intersection(Circle((0.0,0.0), 1.0),Circle((0.0,0.0), 1.0)), shape1)) *)
@@ -522,6 +552,15 @@ Union(Subtraction(Circle((10.0, 10.0), 80.0), Circle((10.0, 10.0), 70.0)),
 Union(Subtraction(Circle((10.0, 10.0), 60.0), Circle((10.0, 10.0), 60.0)),
 Union(Subtraction(Circle((10.0, 10.0), 40.0), Circle((10.0, 10.0), 30.0)),
 Subtraction(Circle((10.0, 10.0), 20.0), Circle((10.0, 10.0), 10.0)))))))));;
+
+density (220.,220.) (Subtraction(Union(Circle((200.,200.),100.),Circle((300.,200.),100.)),Rect((200.,200.),(300.,400.))));;
+which (220.,220.) (Subtraction(Union(Circle((200.,200.),100.),Circle((300.,200.),100.)),Rect((200.,200.),(300.,400.))));;
+
+density (190.,190.) (Subtraction(Union(Circle((200.,200.),100.),Circle((300.,200.),100.)),Rect((200.,200.),(300.,400.))));;
+which (190.,190.) (Subtraction(Union(Circle((200.,200.),100.),Circle((300.,200.),100.)),Rect((200.,200.),(300.,400.))));;
+
+density (250.,190.) (Subtraction(Union(Circle((200.,200.),100.),Circle((300.,200.),100.)),Rect((200.,200.),(300.,400.))));;
+which (250.,190.) (Subtraction(Union(Circle((200.,200.),100.),Circle((300.,200.),100.)),Rect((200.,200.),(300.,400.))));;
 
 (* FUNCTION partition *)
 
