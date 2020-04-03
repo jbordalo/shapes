@@ -355,6 +355,7 @@ let rec grid m n a b =
 (* Para testar repeticoes, use a igualdade "=". Por exemplo, se houver dois circulos iguais (com o mesmo centro e raio) e as restantes forma basicas forem unicas, entao o resultado sera 2. *)
 
 
+(* Makes a list out of a shape *)
 let rec createList s =
 	match s with
 	Rect(_,_) 
@@ -364,22 +365,28 @@ let rec createList s =
 	| Subtraction (s1, s2) -> createList s1 @ createList s2
 ;;
 
-let rec countRepeats s l = (* s has to be basic shape *)
+(* Counts how many times the element s appears on the list l *)
+let rec countAppearances s l =
 	match l with
         [] -> 0
-    	| x::xs -> if s = x then 1 + countRepeats s xs else countRepeats s xs
+    	| x::xs -> if s = x then 1 + countAppearances s xs else countAppearances s xs
 ;;
 
-let rec aux s l = 
-	match s with
-	Rect(_,_)
-	| Circle(_,_) -> countRepeats s l
-	| Union (s1, s2)
-	| Intersection (s1, s2)
-	| Subtraction (s1, s2) -> aux s1 l + aux s2 l
+(* Counts each elements appearance and filters it out *)
+let rec aux l = 
+	match l with
+	[] -> 0
+	| x::xs ->
+		let a = countAppearances x l in
+			if a = 1 then aux (List.filter (fun i -> i <> x) xs)
+			else
+				a + aux (List.filter (fun i -> i <> x) xs)
 ;;
 
-countRepeats rect1 c;;
+(* aux [1;1;2;3;3;3;3];; *)
+(* aux [1;2;3];; *)
+(* aux [1;1;2;3];; *)
+(* aux [1;1;2;2;3];; *)
 
 let countBasicRepetitions s =
 	match s with
@@ -387,19 +394,23 @@ let countBasicRepetitions s =
 	| Circle(_,_) -> 0
 	| Union (s1, s2)
 	| Intersection (s1, s2)
-	| Subtraction (s1, s2) -> if s1 = s2 then 2 else aux s1 (createList s1) + aux s2 (createList s2)
+	| Subtraction (s1, s2) -> 
+		if s1 = s2 then 2
+		else
+			aux (createList s)
 ;;
 
-createList (Union(Intersection(Circle((0.0,0.0), 1.0),Circle((0.0,0.0), 1.0)), shape1));;
+
+(* countBasicRepetitions shape3;; *)
 
 (* Two repeated in union = 2 *)
 (* countBasicRepetitions (Union(Circle((0.0,0.0), 1.0),Circle((0.0,0.0), 1.0))) *)
-(* Two repeated and more shapes in s= 2*)
-(* countBasicRepetitions (Union(Intersection(Circle((0.0,0.0), 1.0),Circle((0.0,0.0), 1.0)), shape1)) *)
-(* More than two repeated = 4*)
-(* countBasicRepetitions (Union(Intersection(Circle((0.0,0.0), 1.0),Circle((0.0,0.0), 1.0)), Union(Circle((0.0,0.0), 1.0),Circle((0.0,0.0), 1.0))))*)
-(* More than two repeated but paired 2 to 2 = ??? result ??? 4 or 2 ???*)
-(* countBasicRepetitions (Union(Intersection(Circle((0.0,0.0), 1.0),Circle((0.0,0.0), 1.0)), Union(Circle((1.0,2.0), 3.0),Circle((1.0,2.0), 3.0))))*)
+(* Two repeated and more shapes in s = 2 *)
+(* countBasicRepetitions (Union(Intersection(Circle((0.0,0.0), 1.0),Circle((0.0,0.0), 1.0)), rect1)) *)
+(* More than two repeated = 4 *)
+(* countBasicRepetitions (Union(Intersection(Circle((0.0,0.0), 1.0),Circle((0.0,0.0), 1.0)), Union(Circle((0.0,0.0), 1.0),Circle((0.0,0.0), 1.0)))) *)
+(* More than two repeated but paired 2 to 2 =  4 *)
+(* countBasicRepetitions (Union(Intersection(Circle((0.0,0.0), 1.0),Circle((0.0,0.0), 1.0)), Union(Circle((1.0,2.0), 3.0),Circle((1.0,2.0), 3.0)))) *)
 
 
 (* FUNCTION svg *)
