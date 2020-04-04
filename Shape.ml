@@ -640,26 +640,22 @@ let boundaries r1 r2 = (* pre: r1 and r2 are rects *)
 		| _ -> failwith "r1 and r2 not Rect"
 ;;
 
-
-let rec boundInt r1 r2 = (* pre: r1 and r2 are both rects *)
-	match r1, r2 with
-		Rect(fr1, sr1), Rect(fr2, sr2) ->
-		Rect (
-        	( max (fst fr1) (fst fr2 ) , max (snd fr1 ) (snd fr2 ) ),
-        	( min (fst sr1 ) (fst sr2 ) , min (snd sr1 ) (snd sr2 ) )
-        	 )
-		| Union(r3,r4), Rect(fr1, sr1) -> 
-								Union ( boundInt r3 r2, boundInt r4 r2)
-		| _ -> failwith "r1 and r2 not Rect"
+let rec boundAux s1 s2 f = 
+	match s1,s2 with 
+		Rect(fr1, sr1), Rect(fr2, sr2) -> f s1 s2
+		| Rect(fr1, sr1), Union(r3,r4) | Union(r3,r4), Rect(fr1, sr1) -> 
+								Union ( boundAux r3 s2 f, boundAux r4 s2 f)
+		| _ -> failwith "s1 or s2 not Rect"
 ;;
 
-
+(*boundP is a function that either returns a Rect *)
+(* or a Union of Rects (when the shape has two separate shapes) *)
 let rec boundP s =
 	match s with
 		Rect (_, _) -> s
 		| Circle (c, r) -> Rect ((fst c-.r, snd c-.r), (fst c+.r,snd c+.r))
-    | Union (l,r) -> rectSum (boundP l) (boundP r)
-    | Intersection (l,r) -> boundInt (boundP l) (boundP r)
+    | Union (l,r) -> boundAux (boundP l) (boundP r) (rectSum)
+    | Intersection (l,r) -> boundAux (boundP l) (boundP r) (rectAnd)
     | Subtraction (l,r) -> boundaries (boundP l) (boundP r)
 ;;
 
@@ -677,6 +673,11 @@ let rec boundP s =
 (* 6. Expected : Rect ((1., 12.), (3., 14.)) *)
 (* boundaries (  Rect((1.,12.),(4.,14.)) ) ( Rect((3.,11.),(5.,15.)) );; *)
 
+
+
+
+(*emptyIntersection - checks whether the intersection of two shapes is empty.*)
+(* (returning true if yes, false if not)*)
 let rec emptyIntersection s1 s2 = 
 	match (boundP (Intersection(s1, s2))) with
 		Rect(tl, br) ->
@@ -684,7 +685,9 @@ let rec emptyIntersection s1 s2 =
 				let y =  (snd tl +. snd br)/. 2.0 in
 					let p = (x, y) in
 						(auxl p s1 s2) && (auxl p s2 s1)
-		| _ -> failwith "Bounds have to be a rectangle"
+		| Union(r1, r2) -> emptyIntersection r1 s1 && emptyIntersection r1 s2 &&
+			emptyIntersection r2 s1 && emptyIntersection r2 s2
+		|_  -> failwith "Bounds have to be either a rectangle or a union of shapes"
 and auxl p s s0 =
 	match s with 
 	Union (l, r) -> if emptyIntersection l r then 
@@ -692,34 +695,19 @@ and auxl p s s0 =
 		else (not (belongs p s))
 	| _ -> (not (belongs p s))
 ;;
-boundP (Intersection (rect1, rect2))
-(* emptyIntersection (Union(Circle((2.,2.), 1.),Circle((5.,2.), 1.))) (Union( Circle((2.,4.), 2.),Circle((5.,4.),2.)));; *)
-(* boundP (Intersection(Union(Circle((2.,2.), 1.),Circle((5.,2.), 1.)), Union( Circle((2.,4.), 2.),Circle((5.,4.),2.))));; *)
 
-(* emptyIntersection (Circle((2.,2.), 1.)) (Union( Circle((2.,4.), 2.),Circle((5.,4.),2.)));; *) 
-(* emptyIntersection (Circle((5.,2.), 1.)) (Union( Circle((2.,4.), 2.),Circle((5.,4.),2.)));; *)
-
-(* boundP ( Intersection(Union(Circle((2.,3.), 1.),Circle((6.,3.), 1.)), Union(Circle((4.,4.), 2.), Rect((2.,5.),(6.,6.)))));; *)
-(* emptyIntersection (Union(Circle((2.,3.), 1.),Circle((6.,3.), 1.))) (Union(Circle((4.,4.), 2.), Rect((2.,5.),(6.,6.))));; *)
-
-(* emptyIntersection(Circle((2.,3.), 1.)) (Circle((4.,4.), 2.));; *)
-(* emptyIntersection(Circle((6.,3.), 1.)) (Circle((4.,4.), 2.));; *)
-(* emptyIntersection (Rect((1.0, 0.0 ), (3.0, 2.0))) (Circle ((6.0, 6.0), 1.0));; *)
-(* emptyIntersection (Rect((1.0, 0.0 ), (3.0, 2.0))) (Rect((2.0, 0.0 ), (6.0, 2.0)));; *)
-(* emptyIntersection (Circle ((2.0,2.0), 1.0)) (Circle ((4.0, 2.0), 1.0));; *)
-(* emptyIntersection (Rect((1.0, 0.0 ), (2.0, 3.0))) (Rect((2.0, 0.0 ), (3.0, 3.0)));; *)
-(* emptyIntersection (Union(Circle((2.,3.), 1.),Circle((6.,3.), 1.))) (Circle((4.,4.), 2.));; *)
-
-(* Test empty intersection: (Very Basic) *)
-(* True *)
-(* emptyIntersection (Rect((1.0, 0.0 ), (3.0, 2.0))) (Circle ((6.0, 6.0), 1.0))*)
-(* False *)
-(* emptyIntersection (Rect((1.0, 0.0 ), (3.0, 2.0))) (Rect((2.0, 0.0 ), (6.0, 2.0)))*)
-(* False *)
-(* emptyIntersection (Circle ((2.0,2.0), 1.0)) (Circle ((4.0, 2.0), 1.0))*)
-(* False *)
-(* emptyIntersection (Rect((1.0, 0.0 ), (2.0, 3.0))) (Rect((2.0, 0.0 ), (3.0, 3.0))) *)
-(* TODO: Intersection/Subtraction with Unions *)
+(*Tests : *)
+(* emptyIntersection(Circle((2.,3.), 1.)) (Circle((4.,4.), 2.));; = false*)
+(* emptyIntersection(Circle((6.,3.), 1.)) (Circle((4.,4.), 2.));; = false*)
+(* emptyIntersection (Rect((1.0, 0.0 ), (3.0, 2.0))) (Circle ((6.0, 6.0), 1.0));; = true*)
+(* emptyIntersection (Rect((1.0, 0.0 ), (3.0, 2.0))) (Rect((2.0, 0.0 ), (6.0, 2.0)));; = false*)
+(* emptyIntersection (Circle ((2.0,2.0), 1.0)) (Circle ((4.0, 2.0), 1.0));;  = false*)
+(* emptyIntersection (Rect((1.0, 0.0 ), (2.0, 3.0))) (Rect((2.0, 0.0 ), (3.0, 3.0)));; = false*)
+(* emptyIntersection (Union(Circle((2.,3.), 1.),Circle((6.,3.), 1.))) (Circle((4.,4.), 2.));; = false *)
+(* emptyIntersection (Rect((1.0, 0.0 ), (3.0, 2.0))) (Circle ((6.0, 6.0), 1.0)) = true*)
+(* emptyIntersection (Rect((1.0, 0.0 ), (3.0, 2.0))) (Rect((2.0, 0.0 ), (6.0, 2.0))) = false*)
+(* emptyIntersection (Circle ((2.0,2.0), 1.0)) (Circle ((4.0, 2.0), 1.0)) = false*)
+(* emptyIntersection (Rect((1.0, 0.0 ), (2.0, 3.0))) (Rect((2.0, 0.0 ), (3.0, 3.0))) = false *)
 
 
 let rec partition s =
