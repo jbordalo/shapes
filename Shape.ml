@@ -223,6 +223,7 @@ let rec which p s =
 
 (* FUNCTION minBound *)
 
+(* Gives a rectangle that includes both rectangles it gets *)
 let rectSum r1 r2 = (* pre: r1 and r2 are both Rect *)
 	match r1, r2 with
 		Rect(fr1, sr1), Rect(fr2, sr2) ->
@@ -233,6 +234,7 @@ let rectSum r1 r2 = (* pre: r1 and r2 are both Rect *)
 		| _ -> failwith "r1 and r2 not Rects"
 ;;
 
+(* Gives a rectangle that bounds the intersection of the two rectangles it gets *)
 let rectAnd r1 r2 = (* pre: r1 and r2 are both Rect *)
 	match r1, r2 with
 		Rect(fr1, sr1), Rect(fr2, sr2) ->
@@ -256,6 +258,7 @@ let rec minBound s =
         | Subtraction (l,r) -> rectSum (minBound l) (minBound r)
 ;;
 
+(* Tighter minBound that binds the black part, used for svg *)
 let rec minBoundSvg s =
 	match s with
 		Rect (_, _) -> s
@@ -370,7 +373,7 @@ let rec grid m n a b =
 (* Para testar repeticoes, use a igualdade "=". Por exemplo, se houver dois circulos iguais (com o mesmo centro e raio) e as restantes forma basicas forem unicas, entao o resultado sera 2. *)
 
 
-(* Makes a list out of a shape *)
+(* Makes a list with all the basic shapes out of a shape *)
 let rec createListFromShape s =
 	match s with
 	Rect(_,_) 
@@ -438,13 +441,15 @@ let absFloat x =
 	if x < 0. then (~-. x) else x
 ;;
 
-let width r = (* @pre: r is Rect(_,_) *)
+(* Gives the width of a rectangle *)
+let width r = (* @pre: r is a Rect *)
 	match r with
 		Rect(l, r) -> absFloat (fst r -. fst l)
 		| _ -> failwith "r not Rect"
 ;;
 
-let height r = (* @pre: r is Rect(_,_) *)
+(* Gives the height of a rectangle *)
+let height r = (* @pre: r is a Rect *)
 	match r with
 		Rect(l, r) -> absFloat (snd r -. snd l)
 		| _ -> failwith "r not Rect"
@@ -457,10 +462,12 @@ let genID =
             "id" ^ (Printf.sprintf "%04d" !idBase)
 ;;
 
+(* Surrounds the string s with a mask element with the given id *)
 let mask s id = 
     "\n\t<mask id=\""^id^"\">\n"^s^"\t</mask>\n"
 ;;
 
+(* Auxiliar mask function for creating elements with a mask id *)
 let rec maskAux s id = 
 	match s with
     	Rect (lt, rb) -> 
@@ -479,6 +486,7 @@ let rec maskAux s id =
         | Subtraction (l,r) -> failwith "Handled outside this function"
 ;;
 
+(* Svg auxiliary function to create the elements *)
 let rec auxSvg s color =
 	match s with
 		Rect (lt, rb) -> "\t<rect x=\"" ^ string_of_float (fst lt) ^
@@ -508,12 +516,14 @@ let rec auxSvg s color =
 			maskAux l id ^ mask ((auxSvg l "white" ) ^ (auxSvg r "black")) id
 ;;
 
+(* Gives the topleftmost x coordinate of the rectangle *)
 let topleftmost r = (* r is a Rect *)
 	match r with
 	Rect(x,y) -> fst x
 	| _ -> failwith "r is not a Rect"
 ;;
 
+(* Gives the bottomrightmost y coordinate of the rectangle *)
 let bottomrightmost r = (* r is a Rect *)	
 	match r with
 	Rect(x,y) -> snd y
