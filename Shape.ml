@@ -112,11 +112,12 @@ let rec belongs p s =
 (* belongs (6., 3.) shapeOverlapUnion *)
 (* none = false *)
 (* belongs (1., 15.) shapeOverlapUnion *)
+
 (* let circle = Circle ((0., 0.),(5.));; *)
-(* belongs (0., 4.) circle *)
-(* belongs (0., 9.) circle *)
-(* belongs (0.0, 0.0) shape3;; *)
-(* belongs (10.0, 10.0) shape3;; *)
+(* belongs (0., 4.) circle = true *)
+(* belongs (0., 9.) circle  = false*)
+(* belongs (0.0, 0.0) shape3;; = true *)
+(* belongs (10.0, 10.0) shape3;; = false*)
 
 (* val shapeIntersection : shape =
   Intersection (Rect ((0., 0.), (5., 4.)), Rect ((2., 2.), (7., 7.))) *)
@@ -169,9 +170,9 @@ let rec density p s =
 (* Outside both = 0 *)
 (* density (0., 15.) shapeIntersection *)
 
-(* density (20.,20.) (Subtraction(Circle((20.,20.), 20.), Circle((20.,20.), 10.))) *)
-(* density (30.,30.) (Subtraction(Circle((20.,20.), 20.), Circle((20.,20.), 10.))) *)
-(* density (500.,500.) (Subtraction(Circle((20.,20.), 20.), Circle((20.,20.), 10.))) *)
+(* density (20.,20.) (Subtraction(Circle((20.,20.), 20.), Circle((20.,20.), 10.))) = 0*)
+(* density (30.,30.) (Subtraction(Circle((20.,20.), 20.), Circle((20.,20.), 10.))) = 1 *)
+(* density (500.,500.) (Subtraction(Circle((20.,20.), 20.), Circle((20.,20.), 10.))) = 0 *)
 
 (* FUNCTION which *)
 
@@ -691,7 +692,7 @@ and auxl p s s0 =
 		else (not (belongs p s))
 	| _ -> (not (belongs p s))
 ;;
-
+boundP (Intersection (rect1, rect2))
 (* emptyIntersection (Union(Circle((2.,2.), 1.),Circle((5.,2.), 1.))) (Union( Circle((2.,4.), 2.),Circle((5.,4.),2.)));; *)
 (* boundP (Intersection(Union(Circle((2.,2.), 1.),Circle((5.,2.), 1.)), Union( Circle((2.,4.), 2.),Circle((5.,4.),2.))));; *)
 
@@ -719,12 +720,17 @@ and auxl p s s0 =
 (* False *)
 (* emptyIntersection (Rect((1.0, 0.0 ), (2.0, 3.0))) (Rect((2.0, 0.0 ), (3.0, 3.0))) *)
 (* TODO: Intersection/Subtraction with Unions *)
+
+
 let rec partition s =
 	match s with 
 	Rect(_,_)
 	|Circle (_,_) -> [s]
 	| Union(s1,s2) -> if (emptyIntersection s1 s2) then 
 							partition s1 @ partition s2 else [s]
+			(* If there is a union between two shapes that do not intersect *)
+			(* those two shapes are islands, therefore we call partition again*)
+			(* if not the union is one single island *)
 	| Intersection(s1,s2) -> 
 			if (emptyIntersection s1 s2) 
 				then [] 
@@ -734,6 +740,9 @@ let rec partition s =
 						| _, Union (l,r) -> inter l r s1 s
 						| _,_ ->[s] 
 			)
+			(* If an intersection is empty it means there is no black shape displayed, *)
+			(* If not, both sides of the intersection are compared to a union,*)
+			(* a similar process to Union is initiated if so. *)
 	| Subtraction(s1,s2) -> if (emptyIntersection s1 s2) 
 			then partition s1 
 		else (	
@@ -745,52 +754,84 @@ let rec partition s =
 									[Subtraction(l,s2); Subtraction(r,s2)]
 					| _,_,_ -> [s]
 		)		
-and subaux s2 s3 = 
-	 if (emptyIntersection s3 s2)
-			then [s3] else partition (Subtraction (s3, s2)) 
+			(* If an subtraction is empty it means the first shape is displayed fully, *)
+			(* If not, both sides of the intersection are compared to a union,*)
+			(* a similar process to Union is initiated if so. If not it is checked whether *)
+			(* the subtraction creates 2 shapes (Returned by a union on boundP) or one. *) 
+			
+			(* Intersection auxiliary functions *)
 and intaux s2 s3 = 
 	if (emptyIntersection s3 s2)
-			then [s3] else partition (Intersection (s3, s2)) 
+			then [] else partition (Intersection (s3, s2)) 
+			(* intaux - Checks if the intersection between of the sides of the Union *)
+			(* (that is one of the sides of the Intersection) and the other side of the Intersection*)
+			(* is empty, if it is there is no black shape*)
+			(* else call partition on the Intersection of the arguments *)
 and inter l r s1 s =
 	if (emptyIntersection l r) 
 			then (intaux s1 l) @ (intaux s1 r)
-	else [s]
+	else [s] 
+			(* inter - Checks if the two sides of a union *)
+			(* (Union that is one of the sides(or both) of the Intersection) are islands*)
+			(* calling intaux if so, *)
+			(* or 'inserting' the whole Intersection in the list*)
+			
+			(* Subtraction auxiliary functions *)
+and subaux s2 s3 = 
+	 if (emptyIntersection s3 s2)
+			then [s3] else partition (Subtraction (s3, s2)) 
+			(* subaux - Checks if the intersection between of the sides of the Union *)
+			(* (that is one of the sides of the Subtraction) and the other side of the Subtraction*)
+			(* is empty, if it is then the black shape is the side of the Union*)
+			(* else call partition on the Subtraction of the arguments *)
 and subtr l r s1 s = 
 	if (emptyIntersection l r) 
 			then (subaux s1 l) @ (subaux s1 r)
 	else [s]
+			(* subtr - Checks if the two sides of a union *)
+			(* (Union that is one of the sides(or both) of the Subtraction) are islands*)
+			(* calling subaux if so, *)
+			(* or 'inserting' the whole Subtracion in the list*)	
 	;;
 
 (* Tests: *)
 (* list = [Circle ((4., 4.), 2.)] *)
 (* partition (Circle((4.,4.), 2.));; *)
+
 (* list = [Rect ((3.3, 3.), (6., 5.))] *)
 (* partition (Rect ((3.3,3.),(6.,5.)));; *)
-(* list = [Union (Rect ((0., 0.), (5., 2.)), Rect ((2., 2.), (7., 7.)))] *)
+
+(* list = [Rect ((0., 0.), (0.1, 0.1)); Rect ((2., 2.), (7., 7 *)
 (* partition (Union(rect1, rect2));; *)
-(* list =[Subtraction (Circle ((2., 2.), 1.)  Union (Circle ((2., 4.), 2.), Circle ((5., 4.), 2.)));
- Subtraction (Circle ((5., 2.), 1.),  Union (Circle ((2., 4.), 2.), Circle ((5., 4.), 2.)))] *)
+
+(* list =[Subtraction (Circle ((2., 2.), 1.), Union (Circle ((2., 4.), 2.), Circle ((5., 4.), 2.)));
+ Subtraction (Circle ((5., 2.), 1.), Union (Circle ((2., 4.), 2.), Circle ((5., 4.), 2.)))] *)
 (* partition (Subtraction(Union(Circle((2.,2.), 1.),Circle((5.,2.), 1.)), Union( Circle((2.,4.), 2.),Circle((5.,4.),2.))));; *)
+
 (* list = [Subtraction (Rect ((2., 2.), (4., 4.)), Rect ((4., 1.), (5., 5.)));
  Subtraction (Rect ((5., 2.), (7., 4.)), Rect ((4., 1.), (5., 5.)))]*)
 (* partition (Subtraction( Rect((2.,2.),(7.,4.)) ,Rect((4.,1.), (5.,5.))));; *)
+
 (* list = [Subtraction (Rect ((2., 1.), (4., 2.)), Rect ((1., 2.), (5., 4.)));
  Subtraction (Rect ((2., 4.), (4., 5.)), Rect ((1., 2.), (5., 4.)))]*)
 (* partition (Subtraction(  Rect((2.,1.),(4.,5.)) , Rect((1.,2.),(5.,4.)) ));; *)
+
 (* list = [Subtraction (Rect ((3., 4.), (6., 6.)), Rect ((2., 2.), (7., 4.)))] *)
 (* partition (Subtraction(Rect((3.,3.), (6.,6.)) , Rect((2.,2.),(7.,4.))));; *)
+
 (* list = [Subtraction (Rect ((2., 6.), (4., 8.)), Rect ((1., 8.), (5., 10.)))] *)
 (* partition (Subtraction(  Rect((2.,6.),(4.,9.)) , Rect((1.,8.),(5.,10.)) ));; *)
+
 (* list = [Subtraction (Rect ((1., 12.), (3., 14.)), Rect ((3., 11.), (5., 15.)))] *)
 (* partition (Subtraction(   Rect((1.,12.),(4.,14.)) ,  Rect((3.,11.),(5.,15.)) ));; *)
 
 
 (* list = [Intersection (Circle ((2., 3.), 1.), Circle ((4., 4.), 2.));
- Intersection (Circle ((6., 3.), 1.), Circle ((4., 4.), 2.))]  for both vv*)
+ Intersection (Circle ((6., 3.), 1.), Circle ((4., 4.), 2.))]  for both *)
 (* partition(Intersection((Circle((4.,4.), 2.)),Union(Circle((2.,3.), 1.),Circle((6.,3.), 1.))));; *)
 (* partition(Intersection(Union(Circle((2.,3.), 1.),Circle((6.,3.), 1.)) ,(Circle((4.,4.), 2.))));; *)
 
-(* list =[Intersection (Circle ((2., 3.), 1.),  Union (Circle ((4., 4.), 2.), Rect ((2., 5.), (6., 6.))));
+(* list = [Intersection (Circle ((2., 3.), 1.),  Union (Circle ((4., 4.), 2.), Rect ((2., 5.), (6., 6.))));
 Intersection (Circle ((6., 3.), 1.), Union (Circle ((4., 4.), 2.), Rect ((2., 5.), (6., 6.))))]*)
 (* partition(Intersection(Union(Circle((2.,3.), 1.),Circle((6.,3.), 1.)), Union(Circle((4.,4.), 2.), Rect((2.,5.),(6.,6.)))));; *)
 
@@ -798,8 +839,11 @@ Intersection (Circle ((6., 3.), 1.), Union (Circle ((4., 4.), 2.), Rect ((2., 5.
  Subtraction (Circle ((6., 3.), 1.), Circle ((4., 4.), 2.))]*)
 (* partition (Subtraction(Union(Circle((2.,3.), 1.),Circle((6.,3.), 1.)), (Circle((4.,4.), 2.))));; *)
 
+(*  list = [Subtraction(Union (Circle ((200., 200.), 100.),
+ Circle ((300., 200.), 100.)), Rect ((200., 200.), (300., 400.)))]*)
 (* partition (Subtraction(Union(Circle((200.,200.),100.),Circle((300.,200.),100.)),Rect((200.,200.),(300.,400.))));; *)
 
 (* list =[Subtraction (Subtraction (Circle ((80., 80.), 60.), Circle ((80., 80.), 20.)),
  Rect ((115., 20.), (160., 80.)))] *)
 (* partition (Subtraction(Subtraction(Circle((80.,80.), 60.),Circle((80.,80.),20.)), Rect((115.,20.), (160., 80.))));; *)
+
