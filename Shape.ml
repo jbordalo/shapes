@@ -6,8 +6,8 @@ Aluno 2: Joao Bordalo, 55697
 
 Comment:
 
-In the function emptyIntersections we are aware that our function boundP r
-eturns both Rectangles and Unions of Rectangles but only account for the 
+In the function emptyIntersections we are aware that our function boundP 
+returns both Rectangles and Unions of Rectangles but only account for the 
 Rectangles therefore any more intricate shapes may not be well represented in
 the output of the partitions function (that might as well not cover all the 
 cases possible for the description of said function)
@@ -25,7 +25,6 @@ cases possible for the description of said function)
 *)
 
 
-
 (* TYPES *)
 
 type point = float*float;;
@@ -37,21 +36,6 @@ type shape = Rect of point*point
            | Subtraction of shape*shape
 ;;
 
-
-(* EXAMPLES *)
-let rect1 = Rect ((0.0, 0.0), (0.1, 0.1)) ;;
-let rect2 = Rect ((2.0, 2.0), (7.0, 7.0)) ;;
-let circle = Circle ((1.0, 1.0), 0.1) ;;
-let shape1 = Union (rect1, rect2) ;;
-let shape2 = Union (shape1, shape1) ;;
-let shape3 = Union (circle, shape2) ;;
-
-(* MORE EXAMPLES *)
-
-let rectOne = Rect ((0.0, 0.0), (5.0, 4.0));;
-let rectTwo = Rect ((2.0, 2.0), (7.0, 7.0));;
-let shapeOverlapUnion = Union (rectOne, rectTwo);;
-let shapeIntersection = Intersection (rectOne, rectTwo);;
 
 (* FUNCTION hasRect *)
 
@@ -76,13 +60,6 @@ let rec countBasic s =
         | Subtraction (l,r) -> countBasic l + countBasic r
 ;;
 
-(* countBasic shape1 *)
-(* countBasic  (Intersection(Rect((5., -110.0),(15., 110.0)),
-Union(Subtraction(Circle((10.0, 10.0), 100.0), Circle((10.0, 10.0), 90.0)),
-Union(Subtraction(Circle((10.0, 10.0), 80.0), Circle((10.0, 10.0), 70.0)),
-Union(Subtraction(Circle((10.0, 10.0), 60.0), Circle((10.0, 10.0), 60.0)),
-Union(Subtraction(Circle((10.0, 10.0), 40.0), Circle((10.0, 10.0), 30.0)),
-Subtraction(Circle((10.0, 10.0), 20.0), Circle((10.0, 10.0), 10.0))))))));; *)
 
 (* FUNCTION belongs *)
 
@@ -101,38 +78,9 @@ let rec belongs p s =
         | Subtraction (l,r) -> belongs p l && not (belongs p r)
 ;;
 
-(* val shapeOverlapUnion : shape =
-  Union (Rect ((0., 0.), (5., 4.)), Rect ((2., 2.), (7., 7.)))
-*)
-
-(* rectOne = true *)
-(* belongs (3., 1.) shapeOverlapUnion *)
-(* rectTwo = true *)
-(* belongs (6., 3.) shapeOverlapUnion *)
-(* none = false *)
-(* belongs (1., 15.) shapeOverlapUnion *)
-
-(* let circle = Circle ((0., 0.),(5.));; *)
-(* belongs (0., 4.) circle = true *)
-(* belongs (0., 9.) circle  = false*)
-(* belongs (0.0, 0.0) shape3;; = true *)
-(* belongs (10.0, 10.0) shape3;; = false*)
-
-(* val shapeIntersection : shape =
-  Intersection (Rect ((0., 0.), (5., 4.)), Rect ((2., 2.), (7., 7.))) *)
-
-(* rectOne = false *)
-(* belongs (3., 1.) shapeIntersection *)
-(* rectTwo = false *)
-(* belongs (6., 3.) shapeIntersection *)
-(* none = false *)
-(* belongs (1., 15.) shapeIntersection *)
-(* both = true *)
-(* belongs (3., 3.) shapeIntersection *)
 
 (* FUNCTION density *)
 
-(* TODO Subtraction off the top of my head, may be wrong *)
 let rec density p s =
     if belongs p s then
 	match s with
@@ -144,34 +92,6 @@ let rec density p s =
 	else 0
 ;;
 
-(* let s = Subtraction(Intersection(Circle((40.,40.),60.), Rect((20.,20.),(80.,90.))), Circle((50.,40.),10.));; *)
-
-(* output_string stdout (svg s) *)
-
-(* density (51.,41.) s = 0 *)
-(* density (39.,39.) s = 2 *)
-
-(* Inside rectOne but not rectTwo = 1 *)
-(* density (2., 1.) shapeOverlapUnion *)
-(* Inside rectTwo but not rectOne = 1 *)
-(* density (3., 5.) shapeOverlapUnion *)
-(* Inside both = 2 *)
-(* density (3., 3.) shapeOverlapUnion *)
-(* Outside both = 0 *)
-(* density (0., 15.) shapeOverlapUnion *)
-
-(* Inside rectOne but not rectTwo = 0 *)
-(* density (2., 1.) shapeIntersection *)
-(* Inside rectTwo but not rectOne = 0 *)
-(* density (3., 5.) shapeIntersection *)
-(* Inside both = 2 *)
-(* density (3., 3.) shapeIntersection *)
-(* Outside both = 0 *)
-(* density (0., 15.) shapeIntersection *)
-
-(* density (20.,20.) (Subtraction(Circle((20.,20.), 20.), Circle((20.,20.), 10.))) = 0*)
-(* density (30.,30.) (Subtraction(Circle((20.,20.), 20.), Circle((20.,20.), 10.))) = 1 *)
-(* density (500.,500.) (Subtraction(Circle((20.,20.), 20.), Circle((20.,20.), 10.))) = 0 *)
 
 (* FUNCTION which *)
 
@@ -186,40 +106,6 @@ let rec which p s =
 	else []
 ;;
 
-(* Testing for union *)
-(* On first rectangle *)
-(* which (1.,1.) shapeOverlapUnion;; *)
-(* On second rectangle *)
-(* which (6.,4.) shapeOverlapUnion;; *)
-(* On both rectangles (intersection) *)
-(* which (4., 3.) shapeOverlapUnion;; *)
-(* On none *)
-(* which (6.,1.) shapeOverlapUnion;; *)
-
-(* Inside rectOne but not rectTwo = [rectOne] *)
-(* which (2., 1.) shapeOverlapUnion *)
-(* Inside rectTwo but not rectOne = [rectTwo] *)
-(* which (3., 5.) shapeOverlapUnion *)
-(* Inside both = [rectOne, rectTwo] *)
-(* which (3., 3.) shapeOverlapUnion *)
-(* Outside both = [] *)
-(* which (0., 15.) shapeOverlapUnion *)
-
-(* Inside rectOne but not rectTwo = 0 *)
-(* which (2., 1.) shapeIntersection *)
-(* Inside rectTwo but not rectOne = 0 *)
-(* which (3., 5.) shapeIntersection *)
-(* Inside both = 2 *)
-(* which (3., 3.) shapeIntersection *)
-(* Outside both = 0 *)
-(* which (0., 15.) shapeIntersection *)
-
-(* On the subtracted area = 0 *)
-(* which (3.0,3.0) shapeSubtract *)
-(* On the limit of the subtracted area = 0 *)
-(* which (4.0,2.0) shapeSubtract *)
-(* Inside the shape = [rect2] *)
-(* which (4.0, 3.0) shapeSubtract *)
 
 (* FUNCTION minBound *)
 
@@ -234,7 +120,7 @@ let rectSum r1 r2 = (* pre: r1 and r2 are both Rect *)
 		| _ -> failwith "r1 and r2 not Rects"
 ;;
 
-(* Gives a rectangle that bounds the intersection of the two rectangles it gets *)
+(* Gives a rectangle that bounds the intersection of the rectangles it gets *)
 let rectAnd r1 r2 = (* pre: r1 and r2 are both Rect *)
 	match r1, r2 with
 		Rect(fr1, sr1), Rect(fr2, sr2) ->
@@ -245,10 +131,8 @@ let rectAnd r1 r2 = (* pre: r1 and r2 are both Rect *)
 		| _ -> failwith "r1 and r2 not Rects"
 ;;
 
-(* rectSum (Rect ((0.,0.),(3.,3.))) (Rect((3.,2.),(6.,5.)));; *)
-(* rectAnd (Rect ((0.,0.),(2.,2.))) (Rect((1.,1.),(4.,4.)));; *)
 
-(* Minimum bounding box for the subshapes of the shape be them white or black *)
+(* Minimum bounding box for the subshapes of the shape (white or black) *)
 let rec minBound s =
 	match s with
 		Rect (_, _) -> s
@@ -268,16 +152,9 @@ let rec minBoundSvg s =
         | Subtraction (l,r) -> minBoundSvg l
 ;;
 
-(* minBound (Circle((2.,2.), 2.));; *)
-(* minBound (Union(Rect ((0.,0.),(3.,3.)), Rect((3.,2.),(6.,5.))));; *)
-(* minBound (Union(Rect ((0.,1.),(2.,3.)), Rect((1.,0.),(3.,4.))));; *)
-(* minBound (Union(Rect ((1.,0.),(3.,4.)), Rect((0.,1.),(2.,3.))));; *)
-(* minBound (Intersection(Rect ((0.,1.),(2.,3.)), Rect((1.,0.),(3.,4.))));; *)
-(* minBound (Intersection(Rect ((1.,0.),(3.,4.)), Rect((0.,1.),(2.,3.))));; *)
-(* minBound shapeSubtract *)
-
 
 (* FUNCTION grid *)
+
 let rec row m n a b =
 	let mx = float_of_int m in
 		let ny = float_of_int n in
@@ -293,15 +170,8 @@ let rec row m n a b =
 			Rect(((mx-.1.0)*.a, (ny-.1.0)*.b),(mx*.a, ny*.b)), row (m-1) n a b
 			   )
 ;;
-(* Both col and row even numbers : Union (Rect ((2., 1.), (3., 2.)), Rect ((0., 1.), (1., 2.)))*)
-(* row 4 2 1.0 1.0 *)
-(* Both col and row odd numbers : Union (Rect ((5., 4.), (6., 5.)), Union (Rect ((3., 4.), (4., 5.)), Rect ((1., 4.), (2., 5.)))) *)
-(* row 7 5 1.0 1.0 *)
-(* Col even and row odd: Union (Rect ((4., 5.), (5., 6.)), Union (Rect ((2., 5.), (3., 6.)), Rect ((0., 5.), (1., 6.)))) *)
-(* row 5 6 1.0 1.0 *)
 
 
-(* Probably unecessary but wtv*)
 let rec col m n a b = 
 	let mx = float_of_int m in
 		let ny = float_of_int n in
@@ -317,25 +187,7 @@ let rec col m n a b =
 			Rect(((mx-.1.0)*.a, (ny-.1.0)*.b),(mx*.a, ny*.b)), col m (n-1) a b
 				)
 ;;
-(* Both col and row even numbers : Rect ((3., 0.), (4., 1.)) *)
-(* col 4 2 1.0 1.0 *)
-(* Both col and row odd numbers : Union (Rect ((6., 3.), (7., 4.)), Rect ((6., 1.), (7., 2.))) *)
-(* col 7 5 1.0 1.0 *)
-(* Col even and row odd: Union (Rect ((4., 5.), (5., 6.)), Union (
-let rect1 = Rect ((0.0, 0.0), (5.0, 2.0));;
-let rect2 = Rect ((2.0, 2.0), (7.0, 7.0));;
-let c1 = Circle((2.0,2.0), 2.0);;
-let shape1 = Union (rect1, rect2);;
-let shapeSubtract = Subtraction(rect2, c1);;
 
-(* MORE EXAMPLES *)
-
-let rectOne = Rect ((0.0, 0.0), (5.0, 4.0));;
-let rectTwo = Rect ((2.0, 2.0), (7.0, 7.0));;
-let shapeOverlapUnion = Union (rectOne, rectTwo);;
-let shapeIntersection = Intersection (rectOne, rectTwo);;
-Rect ((4., 3.), (5., 4.)), Rect ((4., 1.), (5., 2.))))*)
-(* col 5 6 1.0 1.0 *)
 
 let rec grid m n a b =
 	let empty = Rect ((1.0, 1.0), (0.0, 0.0)) in 
@@ -348,30 +200,7 @@ let rec grid m n a b =
 		else Union(row m n a b, grid m (n-1) a b)
 ;;
 
-(* TEST : grid 6 6 1.0 1.0;; *)
-(* Union
- (Union (Rect ((4., 5.), (5., 6.)),
-   Union (Rect ((2., 5.), (3., 6.)), Rect ((0., 5.), (1., 6.)))),
- Union
-  (Union (Rect ((5., 4.), (6., 5.)),
-    Union (Rect ((3., 4.), (4., 5.)), Rect ((1., 4.), (2., 5.)))),
-  Union
-   (Union (Rect ((4., 3.), (5., 4.)),
-     Union (Rect ((2., 3.), (3., 4.)), Rect ((0., 3.), (1., 4.)))),
-   Union
-    (Union (Rect ((5., 2.), (6., 3.)),
-      Union (Rect ((3., 2.), (4., 3.)), Rect ((1., 2.), (2., 3.)))),
-    Union
-     (Union (Rect ((4., 1.), (5., 2.)),
-       Union (Rect ((2., 1.), (3., 2.)), Rect ((0., 1.), (1., 2.)))),
-     Union (Rect ((5., 0.), (6., 1.)),
-      Union (Rect ((3., 0.), (4., 1.)), Rect ((1., 0.), (2., 1.)))))))))*)
-
 (* FUNCTION countBasicRepetitions *)
-(* TODO - if there are 4 shapes equal in pairs what number should this function return?*)
-
-(* Para testar repeticoes, use a igualdade "=". Por exemplo, se houver dois circulos iguais (com o mesmo centro e raio) e as restantes forma basicas forem unicas, entao o resultado sera 2. *)
-
 
 (* Makes a list with all the basic shapes out of a shape *)
 let rec createListFromShape s =
@@ -404,10 +233,6 @@ let rec countAppearancesFilter l =
 				a + countAppearancesFilter (List.filter (fun i -> i <> x) xs)
 ;;
 
-(* aux [1;1;2;3;3;3;3];; *)
-(* aux [1;2;3];; *)
-(* aux [1;1;2;3];; *)
-(* aux [1;1;2;2;3];; *)
 
 let countBasicRepetitions s =
 	match s with
@@ -422,21 +247,9 @@ let countBasicRepetitions s =
 ;;
 
 
-(* countBasicRepetitions shape3;; *)
-
-(* Two repeated in union = 2 *)
-(* countBasicRepetitions (Union(Circle((0.0,0.0), 1.0),Circle((0.0,0.0), 1.0))) *)
-(* Two repeated and more shapes in s = 2 *)
-(* countBasicRepetitions (Union(Intersection(Circle((0.0,0.0), 1.0),Circle((0.0,0.0), 1.0)), rect1)) *)
-(* More than two repeated = 4 *)
-(* countBasicRepetitions (Union(Intersection(Circle((0.0,0.0), 1.0),Circle((0.0,0.0), 1.0)), Union(Circle((0.0,0.0), 1.0),Circle((0.0,0.0), 1.0)))) *)
-(* More than two repeated but paired 2 to 2 =  4 *)
-(* countBasicRepetitions (Union(Intersection(Circle((0.0,0.0), 1.0),Circle((0.0,0.0), 1.0)), Union(Circle((1.0,2.0), 3.0),Circle((1.0,2.0), 3.0)))) *)
-
-
 (* FUNCTION svg *)
 
-(* Absolute value for floats *)
+(* Absolute value function for floats *)
 let absFloat x = 
 	if x < 0. then (~-. x) else x
 ;;
@@ -541,69 +354,6 @@ let svg s =
     		^ auxSvg s "black" ^ "\t</svg>\n</body>\n</html>"
 ;;
 
-(* output_string stdout (svg (Rect((100.,100.),(300.,300.))));; *)
-(* output_string stdout (svg (Circle((100.,100.),300.)));; *)
-(* output_string stdout (svg (Union(Rect((100.,100.),(300.,300.)),Circle((50.,50.),150.))));; *)
-(* output_string stdout (svg (Subtraction(Rect((100.,90.),(300.,520.)),Circle((50.,50.),150.))));; *)
-(* output_string stdout (svg (Subtraction(Rect((100.,90.),(300.,520.)), Union(Rect((50., 60.),(36.,40.)) ,Rect((50.,50.),(150., 150.))))));; *)
-(* output_string stdout (svg (grid 8 8 100. 100.));; *)
-(* output_string stdout (svg (Union((grid 8 8 100. 100.), Subtraction(Circle((400.,400.), 200.), Rect((290.,290.),(510.,510.))))));; *)
-(* Border problem between here *)
-(* output_string stdout (svg (Intersection(Rect((40.,40.),(500.,500.)), Circle((50.,50.), 500.))));; *)
-(* output_string stdout (svg (Intersection(Circle((50.,50.), 500.), Rect((40.,40.),(500.,500.)))));; *)
-(* Border problem between here *)
-(* output_string stdout (svg (Subtraction(Rect((100.,90.),(300.,520.)),Circle((50.,50.),150.))));; *)
-(* output_string stdout (svg (Subtraction(Circle((50.,50.),150.), Rect((100.,90.),(300.,520.)))));; *)
-
-(* Dreamworks kid *)
-(* output_string stdout (svg (Subtraction(Circle((50.,50.),50.), Subtraction(Circle((40.,40.),40.),Rect((70.,10.),(90.,30.))))));; *)
-
-(* Moon *)
-(* output_string stdout (svg (Subtraction(Subtraction(Circle((40.,40.),40.),Rect((70.,10.),(90.,30.))), Circle((50.,50.), 50.))));; *)
-
-(* Donut *)
-(* output_string stdout (svg (Subtraction(Circle((80.,80.), 60.), Circle((80.,80.), 20.))));; *)
-(* output_string stdout (svg (Subtraction(Circle((80.,80.), 60.), Rect((115.,20.), (160.,80.)))));; *)
-(* output_string stdout (svg (Subtraction(Subtraction(Circle((80.,80.), 60.),Circle((80.,80.),20.)), Rect((115.,20.), (160., 80.)))));; *)
-
-(* output_string stdout (svg (Intersection(Rect((100.,200.),(600.,600.)), Rect((400.,100.),(900.,400.)))));; *)
-(* output_string stdout 
-(svg (Subtraction(Intersection(Rect((100.,200.),(600.,600.)), Rect((400.,100.),(900.,400.))), Circle((600.,300.), 100.))));; *)
-
-(* Two lobed afro *)
-(* output_string stdout (svg (Subtraction(Union(Circle((200.,200.),100.),Circle((300.,200.),100.)),Rect((200.,200.),(300.,400.)))));; *)
-
-(* A-B such that AnB is empty *)
-(* output_string stdout (svg (Subtraction(Rect((10.,10.),(40.,40.)), Rect((50.,10.),(70.,30.)))));; *)
-(* output_string stdout (svg (Subtraction(Rect((10.,10.),(40.,40.)), Circle((60.,50.),10.))));; *)
-(* output_string stdout (svg (Subtraction(Rect((10.,10.),(40.,40.)), Union(Rect((50.,10.),(70.,30.)), Circle((60.,50.),10.)))));; *)
-
-(* let intr = Intersection(Circle((300.,200.), 100.), Circle((400.,200.),100.));; *)
-(* Has a border *)
-(* output_string stdout(svg intr);; *)
-(* output_string stdout(svg (Intersection(Circle((400.,200.), 100.), Circle((300.,200.),100.))));; *)
-
-(* Works but solving border issues *)
-(* output_string stdout (svg (Subtraction(Rect((200.,100.),(500.,300.)), intr)));; *)
-
-(* *)
-(* output_string stdout (svg (Union(Circle((500.,500.), 100.), (Subtraction(Circle((500.,500.), 50.),Circle((500.,500.), 100.))))));; *)
-
-(* output_string stdout (svg (Intersection(Rect((5., -110.0),(15., 110.0)),
-Union(Subtraction(Circle((10.0, 10.0), 100.0), Circle((10.0, 10.0), 90.0)),
-Union(Subtraction(Circle((10.0, 10.0), 80.0), Circle((10.0, 10.0), 70.0)),
-Union(Subtraction(Circle((10.0, 10.0), 60.0), Circle((10.0, 10.0), 60.0)),
-Union(Subtraction(Circle((10.0, 10.0), 40.0), Circle((10.0, 10.0), 30.0)),
-Subtraction(Circle((10.0, 10.0), 20.0), Circle((10.0, 10.0), 10.0)))))))));; *)
-
-(* density (220.,220.) (Subtraction(Union(Circle((200.,200.),100.),Circle((300.,200.),100.)),Rect((200.,200.),(300.,400.))));; *)
-(* which (220.,220.) (Subtraction(Union(Circle((200.,200.),100.),Circle((300.,200.),100.)),Rect((200.,200.),(300.,400.))));; *)
-
-(* density (190.,190.) (Subtraction(Union(Circle((200.,200.),100.),Circle((300.,200.),100.)),Rect((200.,200.),(300.,400.))));; *)
-(* which (190.,190.) (Subtraction(Union(Circle((200.,200.),100.),Circle((300.,200.),100.)),Rect((200.,200.),(300.,400.))));; *)
-
-(* density (250.,190.) (Subtraction(Union(Circle((200.,200.),100.),Circle((300.,200.),100.)),Rect((200.,200.),(300.,400.))));; *)
-(* which (250.,190.) (Subtraction(Union(Circle((200.,200.),100.),Circle((300.,200.),100.)),Rect((200.,200.),(300.,400.))));; *)
 
 (* FUNCTION partition *)
 
@@ -639,13 +389,14 @@ let boundaries r1 r2 = (* pre: r1 and r2 are rects *)
 		| _ -> failwith "r1 and r2 not Rect"
 ;;
 
-(*Auxiliar function - deals with the Rects and Unions*)
+(* Auxiliary function - deals with the Rects and Unions*)
 let rec boundAux s1 s2 f = 
 	match s1,s2 with 
 		Rect(fr1, sr1), Rect(fr2, sr2) -> 	(f s1 s2)
 		| Union(r3,r4), Rect(fr1, sr1) -> 
 								Union ( boundAux r3 s2 f, boundAux r4 s2 f)
-		| Rect(fr1, sr1),  Union(r3,r4)-> Union ( boundAux r3 s1 f, boundAux r4 s1 f)
+		| Rect(fr1, sr1),  Union(r3,r4)-> 
+			Union ( boundAux r3 s1 f, boundAux r4 s1 f)
 		| _ ,_-> failwith "s1 or s2 not Rect"
 ;;
 
@@ -660,25 +411,9 @@ let rec boundP s =
     | Subtraction (l,r) -> boundaries (boundP l) (boundP r)
 ;;
 
-(* Tests : *)
-(* 1. Expected : Union(Rect ((2., 2.), (4., 4.)), Rect ((5., 2.), (7., 4.)))*)
-(* boundaries (Rect((2.,2.),(7.,4.))) (Rect((4.,1.), (5.,5.)) );; *)
-(* 2. Expected : Union (Rect ((2., 1.), (4., 2.)), Rect ((2., 4.), (4., 5.)))*)
-(* boundaries (  Rect((2.,1.),(4.,5.)) ) ( Rect((1.,2.),(5.,4.)) );; *)
-(* 3. Expected : Rect ((3., 4.), (6., 6.)) *)
-(* boundaries (Rect((3.,3.), (6.,6.)) ) (Rect((2.,2.),(7.,4.)));; *)
-(* 4. Expected : Rect ((2., 6.), (4., 8.)) *)
-(* boundaries (  Rect((2.,6.),(4.,9.)) ) ( Rect((1.,8.),(5.,10.)) );; *)
-(* 5. Expected : Rect ((3., 2.), (7., 4.)) *)
-(* boundaries (Rect((2.,2.),(7.,4.))) (Rect((1.,1.), (3.,5.)) );; *)
-(* 6. Expected : Rect ((1., 12.), (3., 14.)) *)
-(* boundaries (  Rect((1.,12.),(4.,14.)) ) ( Rect((3.,11.),(5.,15.)) );; *)
 
-
-
-
-(*emptyIntersection - checks whether the intersection of two shapes is empty.*)
-(* (returning true if yes, false if not)*)
+(* emptyIntersection - checks if the intersection of two shapes is empty *)
+(* Returns true if so, false if not*)
 let rec emptyIntersection s1 s2 = 
 	match (boundP (Intersection(s1, s2))) with
 		Rect(tl, br) ->
@@ -695,18 +430,6 @@ and auxl p s s0 =
 	| _ -> (not (belongs p s))
 ;;
 
-(*Tests : *)
-(* emptyIntersection(Circle((2.,3.), 1.)) (Circle((4.,4.), 2.));; = false*)
-(* emptyIntersection(Circle((6.,3.), 1.)) (Circle((4.,4.), 2.));; = false*)
-(* emptyIntersection (Rect((1.0, 0.0 ), (3.0, 2.0))) (Circle ((6.0, 6.0), 1.0));; = true*)
-(* emptyIntersection (Rect((1.0, 0.0 ), (3.0, 2.0))) (Rect((2.0, 0.0 ), (6.0, 2.0)));; = false*)
-(* emptyIntersection (Circle ((2.0,2.0), 1.0)) (Circle ((4.0, 2.0), 1.0));;  = false*)
-(* emptyIntersection (Rect((1.0, 0.0 ), (2.0, 3.0))) (Rect((2.0, 0.0 ), (3.0, 3.0)));; = false*)
-(* emptyIntersection (Union(Circle((2.,3.), 1.),Circle((6.,3.), 1.))) (Circle((4.,4.), 2.));; = false *)
-(* emptyIntersection (Rect((1.0, 0.0 ), (3.0, 2.0))) (Circle ((6.0, 6.0), 1.0)) = true*)
-(* emptyIntersection (Rect((1.0, 0.0 ), (3.0, 2.0))) (Rect((2.0, 0.0 ), (6.0, 2.0))) = false*)
-(* emptyIntersection (Circle ((2.0,2.0), 1.0)) (Circle ((4.0, 2.0), 1.0)) = false*)
-(* emptyIntersection (Rect((1.0, 0.0 ), (2.0, 3.0))) (Rect((2.0, 0.0 ), (3.0, 3.0))) = false *)
 
 let rec partition s =
 	match s with 
@@ -714,8 +437,8 @@ let rec partition s =
 	|Circle (_,_) -> [s]
 	| Union(s1,s2) -> if (emptyIntersection s1 s2) then 
 							partition s1 @ partition s2 else [s]
-			(* If there is a union between two shapes that do not intersect *)
-			(* those two shapes are islands, therefore we call partition again*)
+			(* If there is a union between two shapes that don't intersect *)
+			(* those two shapes are islands, so we call partition again*)
 			(* if not the union is one single island *)
 	| Intersection(s1,s2) -> 
 			if (emptyIntersection s1 s2) 
@@ -726,8 +449,10 @@ let rec partition s =
 						| _, Union (l,r) -> inter l r s1 s
 						| _,_ ->[s] 
 			)
-			(* If an intersection is empty it means there is no black shape displayed, *)
-			(* If not, both sides of the intersection are compared to a union,*)
+			(* If an intersection is empty *)
+			(* it means there is no black shape displayed, *)
+			(* If not, both sides of the intersection *)
+			(* are compared to a union,*)
 			(* a similar process to Union is initiated if so. *)
 	| Subtraction(s1,s2) -> if (emptyIntersection s1 s2) 
 			then partition s1 
@@ -740,17 +465,23 @@ let rec partition s =
 									[Subtraction(l,s2); Subtraction(r,s2)]
 					| _,_,_ -> [s]
 		)		
-			(* If an subtraction is empty it means the first shape is displayed fully, *)
-			(* If not, both sides of the intersection are compared to a union,*)
-			(* a similar process to Union is initiated if so. If not it is checked whether *)
-			(* the subtraction creates 2 shapes (Returned by a union on boundP) or one. *) 
+			(* If a subtraction is empty it means*)
+			(* the first shape is displayed fully, *)
+			(* If not, both sides of the intersection*)
+			(*  are compared to a union,*)
+			(* a similar process to Union is initiated if so. *)
+			(* If not it is checked whether *)
+			(* the subtraction creates 2 shapes *)
+			(* (Returned by a union on boundP) or one. *) 
 			
 			(* Intersection auxiliary functions *)
 and intaux s2 s3 = 
 	if (emptyIntersection s3 s2)
 			then [] else partition (Intersection (s3, s2)) 
-			(* intaux - Checks if the intersection between of the sides of the Union *)
-			(* (that is one of the sides of the Intersection) and the other side of the Intersection*)
+			(* intaux - Checks if the intersection is empty, *)
+			(* between one of the sides of the Union *)
+			(* (that is one of the sides of the Intersection) *)
+			(* and the other side of the Intersection *)
 			(* is empty, if it is there is no black shape*)
 			(* else call partition on the Intersection of the arguments *)
 and inter l r s1 s =
@@ -758,7 +489,8 @@ and inter l r s1 s =
 			then (intaux s1 l) @ (intaux s1 r)
 	else [s] 
 			(* inter - Checks if the two sides of a union *)
-			(* (Union that is one of the sides(or both) of the Intersection) are islands*)
+			(* (Union that is one of the sides (or both) *)
+			(* of the Intersection) are islands*)
 			(* calling intaux if so, *)
 			(* or 'inserting' the whole Intersection in the list*)
 			
@@ -766,70 +498,20 @@ and inter l r s1 s =
 and subaux s2 s3 = 
 	 if (emptyIntersection s3 s2)
 			then [s3] else partition (Subtraction (s3, s2)) 
-			(* subaux - Checks if the intersection between of the sides of the Union *)
-			(* (that is one of the sides of the Subtraction) and the other side of the Subtraction*)
-			(* is empty, if it is then the black shape is the side of the Union*)
+			(* subaux - Checks if the intersection between *)
+			(* one of the sides of the Union *)
+			(* (that is one of the sides of the Subtraction) *)
+			(* and the other side of the Subtraction*)
+			(* is empty, if it is then the black shape *)
+			(* is the side of the Union*)
 			(* else call partition on the Subtraction of the arguments *)
 and subtr l r s1 s = 
 	if (emptyIntersection l r) 
 			then (subaux s1 l) @ (subaux s1 r)
 	else [s]
 			(* subtr - Checks if the two sides of a union *)
-			(* (Union that is one of the sides(or both) of the Subtraction) are islands*)
+			(* (Union that is one of the sides(or both)*)
+			(*  of the Subtraction) are islands*)
 			(* calling subaux if so, *)
 			(* or 'inserting' the whole Subtracion in the list*)	
-	;;
-
-(* Tests: *)
-(* list = [Circle ((4., 4.), 2.)] *)
-(* partition (Circle((4.,4.), 2.));; *)
-
-(* list = [Rect ((3.3, 3.), (6., 5.))] *)
-(* partition (Rect ((3.3,3.),(6.,5.)));; *)
-
-(* list = [Rect ((0., 0.), (0.1, 0.1)); Rect ((2., 2.), (7., 7 *)
-(* partition (Union(rect1, rect2));; *)
-
-(* list =[Subtraction (Circle ((2., 2.), 1.), Union (Circle ((2., 4.), 2.), Circle ((5., 4.), 2.)));
- Subtraction (Circle ((5., 2.), 1.), Union (Circle ((2., 4.), 2.), Circle ((5., 4.), 2.)))] *)
-(* partition (Subtraction(Union(Circle((2.,2.), 1.),Circle((5.,2.), 1.)), Union( Circle((2.,4.), 2.),Circle((5.,4.),2.))));; *)
-
-(* list = [Subtraction (Rect ((2., 2.), (4., 4.)), Rect ((4., 1.), (5., 5.)));
- Subtraction (Rect ((5., 2.), (7., 4.)), Rect ((4., 1.), (5., 5.)))]*)
-(* partition (Subtraction( Rect((2.,2.),(7.,4.)) ,Rect((4.,1.), (5.,5.))));; *)
-
-(* list = [Subtraction (Rect ((2., 1.), (4., 2.)), Rect ((1., 2.), (5., 4.)));
- Subtraction (Rect ((2., 4.), (4., 5.)), Rect ((1., 2.), (5., 4.)))]*)
-(* partition (Subtraction(  Rect((2.,1.),(4.,5.)) , Rect((1.,2.),(5.,4.)) ));; *)
-
-(* list = [Subtraction (Rect ((3., 4.), (6., 6.)), Rect ((2., 2.), (7., 4.)))] *)
-(* partition (Subtraction(Rect((3.,3.), (6.,6.)) , Rect((2.,2.),(7.,4.))));; *)
-
-(* list = [Subtraction (Rect ((2., 6.), (4., 8.)), Rect ((1., 8.), (5., 10.)))] *)
-(* partition (Subtraction(  Rect((2.,6.),(4.,9.)) , Rect((1.,8.),(5.,10.)) ));; *)
-
-(* list = [Subtraction (Rect ((1., 12.), (3., 14.)), Rect ((3., 11.), (5., 15.)))] *)
-(* partition (Subtraction(   Rect((1.,12.),(4.,14.)) ,  Rect((3.,11.),(5.,15.)) ));; *)
-
-
-(* list = [Intersection (Circle ((2., 3.), 1.), Circle ((4., 4.), 2.));
- Intersection (Circle ((6., 3.), 1.), Circle ((4., 4.), 2.))]  for both *)
-(* partition(Intersection((Circle((4.,4.), 2.)),Union(Circle((2.,3.), 1.),Circle((6.,3.), 1.))));; *)
-(* partition(Intersection(Union(Circle((2.,3.), 1.),Circle((6.,3.), 1.)) ,(Circle((4.,4.), 2.))));; *)
-
-(* list = [Intersection (Circle ((2., 3.), 1.),  Union (Circle ((4., 4.), 2.), Rect ((2., 5.), (6., 6.))));
-Intersection (Circle ((6., 3.), 1.), Union (Circle ((4., 4.), 2.), Rect ((2., 5.), (6., 6.))))]*)
-(* partition(Intersection(Union(Circle((2.,3.), 1.),Circle((6.,3.), 1.)), Union(Circle((4.,4.), 2.), Rect((2.,5.),(6.,6.)))));; *)
-
-(* list = [Subtraction (Circle ((2., 3.), 1.), Circle ((4., 4.), 2.));
- Subtraction (Circle ((6., 3.), 1.), Circle ((4., 4.), 2.))]*)
-(* partition (Subtraction(Union(Circle((2.,3.), 1.),Circle((6.,3.), 1.)), (Circle((4.,4.), 2.))));; *)
-
-(*  list = [Subtraction(Union (Circle ((200., 200.), 100.),
- Circle ((300., 200.), 100.)), Rect ((200., 200.), (300., 400.)))]*)
-(* partition (Subtraction(Union(Circle((200.,200.),100.),Circle((300.,200.),100.)),Rect((200.,200.),(300.,400.))));; *)
-
-(* list =[Subtraction (Subtraction (Circle ((80., 80.), 60.), Circle ((80., 80.), 20.)),
- Rect ((115., 20.), (160., 80.)))] *)
-(* partition (Subtraction(Subtraction(Circle((80.,80.), 60.),Circle((80.,80.),20.)), Rect((115.,20.), (160., 80.))));; *)
-
+;;
