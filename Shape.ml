@@ -657,7 +657,7 @@ let rec boundP s =
 		Rect (_, _) -> s
 		| Circle (c, r) -> Rect ((fst c-.r, snd c-.r), (fst c+.r,snd c+.r))
     | Union (l,r) -> boundAux (boundP l) (boundP r) (rectSum)
-    | Intersection (l,r) -> boundInt (boundP l) (boundP r) (rectAnd)
+    | Intersection (l,r) -> boundAux(boundP l) (boundP r) (rectAnd)
     | Subtraction (l,r) -> boundaries (boundP l) (boundP r)
 ;;
 
