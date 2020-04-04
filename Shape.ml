@@ -640,12 +640,14 @@ let boundaries r1 r2 = (* pre: r1 and r2 are rects *)
 		| _ -> failwith "r1 and r2 not Rect"
 ;;
 
+(*Auxiliar function - deals with the Rects and Unions*)
 let rec boundAux s1 s2 f = 
 	match s1,s2 with 
-		Rect(fr1, sr1), Rect(fr2, sr2) -> f s1 s2
-		| Rect(fr1, sr1), Union(r3,r4) | Union(r3,r4), Rect(fr1, sr1) -> 
+		Rect(fr1, sr1), Rect(fr2, sr2) -> 	(f s1 s2)
+		| Union(r3,r4), Rect(fr1, sr1) -> 
 								Union ( boundAux r3 s2 f, boundAux r4 s2 f)
-		| _ -> failwith "s1 or s2 not Rect"
+		| Rect(fr1, sr1),  Union(r3,r4)-> Union ( boundAux r3 s1 f, boundAux r4 s1 f)
+		| _ ,_-> failwith "s1 or s2 not Rect"
 ;;
 
 (*boundP is a function that either returns a Rect *)
@@ -655,7 +657,7 @@ let rec boundP s =
 		Rect (_, _) -> s
 		| Circle (c, r) -> Rect ((fst c-.r, snd c-.r), (fst c+.r,snd c+.r))
     | Union (l,r) -> boundAux (boundP l) (boundP r) (rectSum)
-    | Intersection (l,r) -> boundAux (boundP l) (boundP r) (rectAnd)
+    | Intersection (l,r) -> boundInt (boundP l) (boundP r) (rectAnd)
     | Subtraction (l,r) -> boundaries (boundP l) (boundP r)
 ;;
 
@@ -685,9 +687,7 @@ let rec emptyIntersection s1 s2 =
 				let y =  (snd tl +. snd br)/. 2.0 in
 					let p = (x, y) in
 						(auxl p s1 s2) && (auxl p s2 s1)
-		| Union(r1, r2) -> emptyIntersection r1 s1 && emptyIntersection r1 s2 &&
-			emptyIntersection r2 s1 && emptyIntersection r2 s2
-		|_  -> failwith "Bounds have to be either a rectangle or a union of shapes"
+		|_  -> failwith "Bounds has to be a rectangle"
 and auxl p s s0 =
 	match s with 
 	Union (l, r) -> if emptyIntersection l r then 
@@ -708,7 +708,6 @@ and auxl p s s0 =
 (* emptyIntersection (Rect((1.0, 0.0 ), (3.0, 2.0))) (Rect((2.0, 0.0 ), (6.0, 2.0))) = false*)
 (* emptyIntersection (Circle ((2.0,2.0), 1.0)) (Circle ((4.0, 2.0), 1.0)) = false*)
 (* emptyIntersection (Rect((1.0, 0.0 ), (2.0, 3.0))) (Rect((2.0, 0.0 ), (3.0, 3.0))) = false *)
-
 
 let rec partition s =
 	match s with 
